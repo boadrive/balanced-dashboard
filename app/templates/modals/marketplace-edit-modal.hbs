@@ -1,0 +1,29 @@
+{{#view "form-fields/form-section" model=view.model sectionTitle="Marketplace information"}}
+	{{view "form-fields/text-form-field"
+		model=view.model
+		inputClassNames="full"
+		labelText="Name"
+		field="name"
+	}}
+
+	{{view "form-fields/text-form-field"
+		model=view.model
+		inputClassNames="full"
+		labelText="Support email"
+		field="support_email_address"
+	}}
+
+	{{view "form-fields/text-form-field"
+		model=view.model
+		inputClassNames="full"
+		labelText="Domain URL"
+		field="domain_url"
+	}}
+
+	{{view "form-fields/text-form-field"
+		model=view.model
+		inputClassNames="full"
+		labelText="Support phone number"
+		field="support_phone_number"
+	}}
+{{/view}}

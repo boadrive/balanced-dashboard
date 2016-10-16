@@ -1,14 +1,24 @@
-var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
+import ENV from "balanced-dashboard/config/environment";
+import Ember from "ember";
+import Utils from "./lib/utils";
+import Marketplace from "balanced-dashboard/models/marketplace";
+
+import Constants from "./utils/constants";
+import CookieConstants from "./utils/constants/cookie";
+import Ajax from "balanced-dashboard/lib/ajax";
+
+import ApiKey from "./models/api-key";
+
+var createInstance = function(name, attributes) {
+	return BalancedApp.__container__.lookupFactory(name).create(attributes);
+};
+
+var Auth = Ember.Namespace.extend(Ember.Evented).create({
+	loadCsrfTokenIfNotLoaded: function() {
+		return Ajax.loadCSRFTokenIfNotLoaded();
+	},
 	request: function(opts) {
-		var deferred = Ember.RSVP.defer();
-		Balanced.NET.ajax(opts || {})
-			.done(function(response) {
-				deferred.resolve(response);
-			})
-			.fail(function(response) {
-				deferred.reject(response);
-			});
-		return deferred.promise;
+		return Ajax.ajax(opts || {});
 	},
 	signInRequest: function(options) {
 		var self = this;
@@ -18,7 +28,7 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		}, options);
 		return this.request(attributes)
 			.then(function(response) {
-				var user = Balanced.User.create();
+				var user = createInstance("model:user");
 				user.populateFromJsonResponse(response.user);
 				self.setAuthProperties(
 					true,
@@ -32,16 +42,14 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 				return user;
 			})
 			.then(function(user) {
-				return self.loadExtensions(user)
-					.then(function() {
-						return user;
-					});
-			})
-			.then(function(user) {
 				if (user.get("admin")) {
-					Balanced.Shapeshifter.load("balanced-admin", true);
 					self.setAPIKey(user.get("admin"));
 				}
+				return user;
+			})
+			.then(function(user) {
+				var AnalyticsLogger = require("balanced-dashboard/utils/analytics_logger")["default"];
+				AnalyticsLogger.identify(user);
 				return user;
 			})
 			.then(undefined, function(jqxhr) {
@@ -69,7 +77,7 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 				type: 'GET'
 			})
 			.then(undefined, function() {
-				var authCookie = $.cookie(Balanced.COOKIE.EMBER_AUTH_TOKEN);
+				var authCookie = $.cookie(CookieConstants.EMBER_AUTH_TOKEN);
 				if (authCookie) {
 					return self.signInRequest({
 						data: {
@@ -90,12 +98,12 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		var self = this;
 		this.setAPIKey(apiKey);
 
-		return Balanced.APIKey.findAll()
+		return ApiKey.findAll()
 			.then(function(apiKeys) {
 				var apiKeysWithSecrets = apiKeys.filterBy('secret');
 				var secret = apiKeysWithSecrets.length ? apiKeysWithSecrets[0].get('secret') : null;
 				self.loginGuestUser(secret);
-				return Balanced.Marketplace.findAll();
+				return Marketplace.findAll();
 			})
 			.then(function(marketplaces) {
 				var marketplace = marketplaces.get('length') ? marketplaces.objectAt(0) : null;
@@ -108,7 +116,7 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		this.storeGuestAPIKey(apiKey);
 		this.setAPIKey(apiKey);
 
-		var guestUser = Balanced.User.create({
+		var guestUser = createInstance("model:user", {
 			user_marketplaces: Ember.A(),
 			marketplaces_uri: '/users/guest/marketplaces',
 			api_keys_uri: '/users/guest/api_keys'
@@ -123,12 +131,11 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 			marketplace.get('name'),
 			this.getGuestAPIKey()
 		);
-
-		Balanced.Utils.setCurrentMarketplace(marketplace);
+		Utils.setCurrentMarketplace(marketplace);
 	},
 
 	addUserMarketplace: function(id, uri, name, secret) {
-		var guestMarketplace = Balanced.UserMarketplace.create({
+		var guestMarketplace = createInstance("model:user-marketplace", {
 			id: id,
 			uri: uri,
 			name: name,
@@ -140,11 +147,9 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 			return item.isEqual(guestMarketplace);
 		});
 
-		if (equivalentMarketplace) {
-			return;
+		if (!equivalentMarketplace) {
+			userMarketplaces.pushObject(guestMarketplace);
 		}
-
-		userMarketplaces.pushObject(guestMarketplace);
 	},
 
 	signOut: function() {
@@ -156,7 +161,7 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		};
 		return this.request(attributes)
 			.then(function() {
-				Balanced.NET.loadCSRFToken();
+				Ajax.loadCSRFToken();
 			});
 	},
 
@@ -164,28 +169,13 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		var self = this;
 		this.unsetAPIKey();
 
-		return Balanced.APIKey
+		return ApiKey
 			.create()
 			.save()
 			.then(function(apiKey) {
 				self.loginGuestUser(apiKey.get('secret'));
 				return apiKey;
 			});
-	},
-
-	getExtensions: function() {
-		return ENV.BALANCED.EXT || this.get("user.ext");
-	},
-
-	loadExtensions: function() {
-		var promises = _.map(this.getExtensions(), function(val, key) {
-			var deferred = Ember.RSVP.defer();
-			$.getScript(key).always(function() {
-				deferred.resolve();
-			});
-			return deferred.promise;
-		});
-		return Ember.RSVP.allSettled(promises);
 	},
 
 	enableMultiFactorAuthentication: function() {
@@ -215,32 +205,15 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 			});
 	},
 
-	confirmOTP: function(token) {
-		var self = this;
-		var attributes = {
-			url: ENV.BALANCED.AUTH + this.get('lastLoginUri'),
-			type: 'PUT',
-			data: {
-				confirm: token
-			},
-			dataType: 'JSON'
-		};
-		return this.request(attributes)
-			.then(function(response) {
-				var user = self.get('user') || Balanced.User.create();
-				user.populateFromJsonResponse(response.user);
+	setAuthPropertiesFromSession: function(session) {
+		var user = session.get("user");
+		var userId = session.get("userId");
+		var uri = session.get("uri");
+		var isAdmin = session.get("isAdmin");
+		var isGuest = session.get("isGuest");
 
-				if (!self.get('signedIn')) {
-					self.setAuthProperties(true,
-						user,
-						response.user_id,
-						response.user_id,
-						false,
-						response.admin);
-
-					self.rememberLogin(response.uri);
-				}
-			});
+		this.setAuthProperties(true, user, userId, userId, isGuest, isAdmin);
+		this.rememberLogin(uri);
 	},
 
 	setAuthProperties: function(signedIn, user, userId, authToken, isGuest, isAdmin) {
@@ -253,8 +226,8 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 			isAdmin: isAdmin
 		});
 
-		Balanced.__container__.unregister('user:main');
-		Balanced.register('user:main', user, {
+		this.applicationContainer.unregister('user:main');
+		this.applicationContainer.register('user:main', user, {
 			instantiate: false,
 			singleton: true
 		});
@@ -263,14 +236,14 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 	rememberLogin: function(token) {
 		this.set('lastLoginUri', token);
 
-		$.cookie(Balanced.COOKIE.EMBER_AUTH_TOKEN, token, {
-			expires: Balanced.TIME.WEEK,
+		$.cookie(CookieConstants.EMBER_AUTH_TOKEN, token, {
+			expires: Constants.TIME.WEEK,
 			path: '/'
 		});
 	},
 
 	forgetLogin: function() {
-		_.each([Balanced.COOKIE.EMBER_AUTH_TOKEN, Balanced.COOKIE.API_KEY_SECRET, Balanced.COOKIE.SESSION], function(CONST_VAR) {
+		_.each([CookieConstants.EMBER_AUTH_TOKEN, CookieConstants.API_KEY_SECRET, CookieConstants.SESSION], function(CONST_VAR) {
 			$.removeCookie(CONST_VAR, {
 				path: '/'
 			});
@@ -279,82 +252,51 @@ var auth = Balanced.Auth = Ember.Namespace.extend(Ember.Evented).create({
 		this.setProperties({
 			lastLoginUri: null,
 			OTPSecret: null,
-			signInTransitionCalled: false
 		});
 
 		this.unsetAPIKey();
 
 		this.setAuthProperties(false, null, null, null, false, false);
 
-		Balanced.Utils.setCurrentMarketplace(null);
+		Utils.setCurrentMarketplace(null);
 	},
 
 	setAPIKey: function(apiKeySecret) {
 		// Have to use Ember.set since we're using defaultApiKey in bindings
-		Ember.set(Balanced.NET, 'defaultApiKey', apiKeySecret);
+		Ember.set(Ajax, 'defaultApiKey', apiKeySecret);
 	},
 
 	unsetAPIKey: function() {
-		Ember.set(Balanced.NET, 'defaultApiKey', null);
+		Ember.set(Ajax, 'defaultApiKey', null);
 	},
 
 	storeGuestAPIKey: function(apiKeySecret) {
-		$.cookie(Balanced.COOKIE.API_KEY_SECRET, apiKeySecret, {
+		$.cookie(CookieConstants.API_KEY_SECRET, apiKeySecret, {
 			path: '/',
-			expires: Balanced.TIME.WEEK
+			expires: Constants.TIME.WEEK
 		});
 	},
 
 	getGuestAPIKey: function() {
-		return $.cookie(Balanced.COOKIE.API_KEY_SECRET);
+		return $.cookie(CookieConstants.API_KEY_SECRET);
 	},
 
 	rememberLastUsedMarketplaceUri: function(marketplaceUri) {
-		$.cookie(Balanced.COOKIE.MARKETPLACE_URI, marketplaceUri, {
+		$.cookie(CookieConstants.MARKETPLACE_URI, marketplaceUri, {
 			path: '/',
-			expires: Balanced.TIME.THREE_YEARS
+			expires: Constants.TIME.THREE_YEARS
 		});
 	},
 
 	getLastUsedMarketplaceUri: function() {
-		return $.cookie(Balanced.COOKIE.MARKETPLACE_URI);
+		return $.cookie(CookieConstants.MARKETPLACE_URI);
 	},
 
 	forgetLastUsedMarketplaceUri: function() {
-		$.removeCookie(Balanced.COOKIE.MARKETPLACE_URI, {
+		$.removeCookie(CookieConstants.MARKETPLACE_URI, {
 			path: '/'
 		});
 	}
 });
 
-Balanced.register('user:main', null, {
-	instantiate: false,
-	singleton: true
-});
-
-Balanced.register('auth:main', Balanced.Auth, {
-	instantiate: false,
-	singleton: true
-});
-
-if (!Balanced.constructor.initializers.injectUser) {
-	Balanced.initializer({
-		name: 'injectUser',
-
-		initialize: function(container, App) {
-			container.typeInjection('controller', 'user', 'user:main');
-			container.typeInjection('route', 'user', 'user:main');
-		}
-	});
-}
-
-if (!Balanced.constructor.initializers.injectAuth) {
-	Balanced.initializer({
-		name: 'injectAuth',
-
-		initialize: function(container, App) {
-			container.typeInjection('controller', 'auth', 'auth:main');
-			container.typeInjection('route', 'auth', 'auth:main');
-		}
-	});
-}
+export default Auth;

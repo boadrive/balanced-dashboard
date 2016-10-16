@@ -1,0 +1,207 @@
+/*
+* Site structure
+*
+* Behold, the structure of the site. The following defines the colors, the
+* look, and the feel of the main structural components of the site.
+*/
+@marketplaceNavIconSize: 50px;
+@marketplaceNavBackground: @gray2;
+@marketplaceNavColor: @gray4;
+@marketplaceNavTriangleSize: 10px;
+
+#logo {
+  height: @headerHeight;
+  width: 32px;
+  float: left;
+
+  .cssicon(
+    @url: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAV1BMVEVymix4oi/vQDXjPDJ4oi94oi/vQDXvQDXvQDXvQDV4oi91ni7vQDXqPjN4oi/foRLanRHopxNznC3mPTPopxPopxMAAABwmCzgPDHanRHopxN4oi/vQDXwPhJhAAAAF3RSTlPbICDbYBBQYEAQgLOAs1DH7hDHx6CAAHwvTFAAAABmSURBVHja1cjXDYAwDABR01sCpAEh2X9ObCFkJLMA93cPSpcPtb0a92QLqDLWsdYJA8iUY7aJulkzTzdr4p55Jp1gUM61uOzWjg1sn/2Iw7IEyeHEguCVeBUciaNgT+wFG49qnrsAe+cllBc1FLYAAAAASUVORK5CYII='),
+    @width: 14px,
+    @height: 14px,
+    @display: block
+  );
+  margin: 25px 0 0 17px;
+  background-size: 14px;
+  background-repeat: no-repeat;
+}
+
+#balanced-address {
+  display: none;
+}
+
+#flogo {
+  > .img {
+    margin: 20px auto !important;
+  }
+}
+
+#balanced-footer {
+  @baseColor: @gray4;
+  bottom: 17px;
+  position: absolute;
+  width: 100%;
+
+  .info-links {
+    margin-bottom: 14px;
+  }
+
+  span, a {
+    .sl-sm;
+    color: @baseColor;
+    display: block;
+    padding: 1px 17px;
+  }
+
+  .copyright-label {
+    color: @white;
+  }
+
+  a {
+    &:visited {
+      color: @baseColor;
+    }
+
+    &:hover, &:active {
+      color: @white;
+      text-decoration: none;
+    }
+  }
+}
+
+#site-nav {
+  margin-right: 45px;
+  position: absolute;
+  top: 15px;
+  bottom: 15px;
+  right: 0;
+  z-index: 2;
+  border-left: 1px solid @gray2;
+
+  .nav-login {
+    line-height: @headerHeight;
+  }
+
+  .dropdown {
+    float: left;
+    margin-left: 25px;
+
+    .dropdown-toggle {
+      line-height: 40px;
+
+      .caret {
+        margin-top: 11px;
+      }
+    }
+
+    [class^="icon-"] {
+      font-size: 12px;
+      line-height: 22px;
+      margin-right: -2px;
+    }
+
+    span {
+      font-size: 12px;
+    }
+
+    > a, > span {
+      display: block;
+    }
+  }
+}
+
+#login-menu {
+  text-align: center;
+
+  a {
+    line-height: 39px;
+  }
+}
+
+#user-menu {
+  min-width: 90px;
+}
+
+#order-sort-menu {
+  .caret {
+    margin-top: 11px;
+  }
+}
+
+.dropdown-menu.align-right {
+  right: 0;
+  left: auto;
+}
+
+#content {
+  margin-left: @marketplaceNavWidth;
+  min-height: @mainMinHeight;
+  padding: @mainVerticalPadding;
+  position: relative;
+
+  &.no-min-height {
+    min-height: auto;
+  }
+}
+
+#marketplace-apply {
+  margin: 50px 150px;
+}
+
+.hidden {
+  display: none;
+}
+
+hr {
+  border-top: 1px solid @gray2;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.alert-count {
+  .sl-sm-sb;
+  color: @gray8;
+  float: right;
+  display: inline-block;
+  background-color: @white;
+  padding: 1px 8px 0;
+  margin-top: 3px;
+  .border-radius(15px);
+}
+
+.payments-navbar {
+  background-color: @white;
+  border-bottom: 1px solid @gray2;
+  margin: 0 -45px;
+  padding: 8px 45px;
+
+  .actions {
+    & > a {
+      line-height: 32px;
+
+      i {
+        vertical-align: sub;
+      }
+    }
+  }
+}
+
+.linked-list {
+  display: block;
+  padding: 5px 10px;
+  border: 1px solid @gray2;
+
+  i {
+    color: @black;
+    margin-right: 10px;
+  }
+
+  & + & {
+    margin-top: -1px;
+  }
+}
+
+.col-icon {
+  width: 40px;
+}

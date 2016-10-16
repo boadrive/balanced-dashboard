@@ -1,80 +1,43 @@
-<div id="order">
-
-	<h1 class="page-title">Order</h1>
-
-	<div class="order-header main-header">
-		<div class="row">
-			<div class="span2 label">
-				<i class="icon-order"></i>
-			</div>
-			<div class="span8 title">
-				<span class="nav3d">
-					{{page_title}}
-				</span>
-			</div>
-		</div>
+{{#view "page-navigations/page-navigation" pageType=model.type_name title=model.page_title}}
+	<div class="buttons page-actions">
+		<a class="btn" {{action "openModal" "modals/credit-order-modal" model controllers.marketplace.model}}>Credit</a>
 	</div>
+{{/view}}
+{{#view "detail-views/body-panel"}}
+	{{#view "detail-views/api-model-panel" model=model}}
+		<ul class="nav-tabs balance">
+			<li><a>Order balance: {{escrow_balance}}</a></li>
+		</ul>
+		{{view "detail-views/summary-sections/order-summary-section" model=model}}
+		{{view detail-views/description-lists/order-titled-key-values-section model=model}}
+		{{view "meta-list" type=model}}
+	{{/view}}
 
-	<div class="order-sub-header">
-		<span class="created">
-			Created:
-			<time {{bind-attr datetime="transaction.created_at"}} {{bind-attr title="transaction.created_at"}}>{{humanReadableDateShort created_at}}</time>
-		</span>
-		<span class="order-id">Order ID: {{id}}</span>
-	</div>
+	{{#view "detail-views/order-main-panel" model=model}}
+		{{view "detail-views/tabs/order-tab" model=model}}
 
-	<div class="order-summary">
-		<div class="row head">
-			<div class="span">Summary</div>
-			<div class="span4">Quantity</div>
-			<div class="span4">Total</div>
-		</div>
-		<div {{bind-attr class=":row :debits amounts.debits.quantity::empty"}}>
-			<div class="span">Debits</div>
-			<div class="span4 quantity">{{amounts.debits.quantity}}</div>
-			<div class="span4 total">{{amounts.debits.total}}</div>
-		</div>
-		<div {{bind-attr class=":row :refunds amounts.refunds.quantity::empty"}}>
-			<div class="span10">Refunds</div>
-			<div class="span4 quantity">{{amounts.refunds.quantity}}</div>
-			<div class="span4 total">{{amounts.refunds.total}}</div>
-		</div>
-		{{#if multiple_credits}}
-			{{#each credit in credits}}
-				<div class="row :credits">
-					<div class="span">Credit to {{credit.funding_instrument_description}}</div>
-					<div class="span4 quantity">1</div>
-					<div class="span4 total">{{credit.amount_dollars}}</div>
-				</div>
-			{{/each}}
-		{{else}}
-			<div {{bind-attr class=":row :credits amounts.credits.quantity::empty"}}>
-				<div class="span">Credits to seller</div>
-				<div class="span4 quantity">{{amounts.credits.quantity}}</div>
-				<div class="span4 total">{{amounts.credits.total}}</div>
+		{{#if view.isActivityTabSelected}}
+			<h3>Charges</h3>
+			<div class="results table-responsive">
+				{{view "results/order-transactions-table" loader=debitsResultsLoader customers=model.buyers}}
+			</div>
+
+			<h3>Payouts</h3>
+			<div class="results table-responsive">
+				{{view "results/order-transactions-table" loader=creditsResultsLoader customers=model.seller}}
 			</div>
 		{{/if}}
-		<div {{bind-attr class=":row :reversals amounts.reversals.quantity::empty"}}>
-			<div class="span">Reversals</div>
-			<div class="span4 quantity">{{amounts.reversals.quantity}}</div>
-			<div class="span4 total">{{amounts.reversals.total}}</div>
-		</div>
-	</div>
 
-	<div class="order-total">
-		<h1>{{escrow_balance}}</h1>
-		<p>
-			Escrow balance for this order
-		</p>
-	</div>
+		{{#if view.isLogsEventsTabSelected}}
+			<h3>Logs</h3>
+			<div class="results">
+				{{view "resource-logs" content=model}}
+			</div>
 
-	<h3 class="order-party">Buyer</h3>
-	{{#each buyer in buyers}}
-		{{order-customer customer=buyer debits=debits refunds=refunds order=model}}
-	{{/each}}
-
-	<h3 class="order-party">Seller</h3>
-	{{order-customer customer=seller credits=credits reversals=reversals order=model}}
-</div>
-
-{{view Balanced.ResourceLogsView contentBinding="model"}}
+			<h3>Events</h3>
+			<div class="results">
+				{{view "resource-events" content=model}}
+			</div>
+		{{/if}}
+	{{/view}}
+{{/view}}

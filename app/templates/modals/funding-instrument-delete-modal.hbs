@@ -1,0 +1,7 @@
+<form {{action "save" view.fundingInstrument target="view" on="submit"}}>
+	<div class="modal-body modal-info">
+		<div class="content">{{view.description}}</div>
+	</div>
+
+	{{view "modals/modal-base-footer" isSaving=view.isSaving submitButtonText="Delete"}}
+</form>

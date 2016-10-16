@@ -1,0 +1,73 @@
+.icon-tooltip {
+  font-size: 16px;
+  margin-left: 3px;
+}
+
+.popover {
+  .sl;
+  padding: 30px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: @white;
+  text-align: left;
+  max-width: 350px;
+  .box-shadow(0px, 1px, 4px, @gray2);
+
+  .popover-title {
+    .sl-md-sb;
+  	padding: 0;
+    background-color: @white;
+    border-bottom: none;
+    border-radius: 0;
+  }
+
+  .popover-content {
+    .sl;
+    color: @gray6;
+  	padding: 10px 0;
+    min-width: 150px;
+
+    img {
+      max-width: 240px;
+    }
+  }
+
+  .close {
+    font-size: 14px;
+    opacity: 1;
+    position: absolute;
+    top: 30px;
+    right: 30px;
+  }
+
+  &.top > .arrow {
+    border-top-color: @gray2;
+
+    &:after {
+      border-top-color: @white;
+    }
+  }
+
+  &.bottom > .arrow {
+    border-bottom-color: @gray2;
+
+    &:after {
+      border-bottom-color: @white;
+    }
+  }
+  &.right > .arrow {
+    border-right-color: @gray2;
+
+    &:after {
+      border-right-color: @white;
+    }
+  }
+  &.left > .arrow {
+    border-left-color: @gray2;
+
+    &:after {
+      border-left-color: @white;
+    }
+  }
+}

@@ -1,27 +1,36 @@
-Balanced.Download = Balanced.Model.extend({
+import Rev0Serializer from "../serializers/rev0";
+import Model from "./core/model";
+
+var Download = Model.extend({
 	// have to override the URI for create, since the uri property of the JSON is the search URI
 	_createUri: function() {
 		return '/downloads';
-	}
+	},
+
+	uri: ""
 });
 
-Balanced.Adapter.registerHostForType(Balanced.Download, ENV.BALANCED.WWW);
-
-Balanced.Download.reopenClass({
-	serializer: Balanced.Rev0Serializer.extend({
+Download.reopenClass({
+	serializer: Rev0Serializer.extend({
 		_propertiesMap: function(record) {
-			var obj = {
-				email_address: record.email_address,
-				uri: '',
-				type: ''
-			};
-			if (record.uri) {
-				obj.uri = record.uri;
-			}
-			if (record.type) {
-				obj.type = record.type;
-			}
-			return obj;
+			var result = {};
+			var properties = [
+				"uri",
+				"email_address",
+				"beginning",
+				"ending",
+				"type"
+			];
+			properties.forEach(function(name) {
+				var value = record.get(name);
+				if (!Ember.isBlank(value)) {
+					result[name] = value;
+				}
+			});
+
+			return result;
 		}
 	}).create()
 });
+
+export default Download;

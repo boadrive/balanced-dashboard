@@ -1,0 +1,34 @@
+{{#view "form-fields/form-section" bankAccountTypes=view.bankAccountTypes model=view.model sectionTitle="Bank account information"}}
+	{{view "form-fields/text-form-field"
+		model=view.model
+		labelText="Name on account"
+		field="name"
+		inputClassNames="full"
+	}}
+
+	{{view "form-fields/text-form-field"
+		model=view.model
+		labelText="Routing number"
+		field="routing_number"
+		inputClassNames="full"
+		tooltipTitle="Where is the routing number?"
+		tooltipContent='<img src="images/bank-account-instructions.png" alt="Bank Account Instructions"/>'
+	}}
+
+	{{view "form-fields/text-form-field"
+		model=view.model
+		labelText="Account number"
+		field="account_number"
+		inputClassNames="full"
+		tooltipTitle="Where is the account number?"
+		tooltipContent='<img src="images/bank-account-instructions.png" alt="Bank Account Instructions"/>'
+	}}
+
+	{{view "form-fields/select-form-field"
+		model=view.model
+		content=view.bankAccountTypes
+		labelText="Bank account type"
+		name="account_type"
+		field="account_type"
+	}}
+{{/view}}

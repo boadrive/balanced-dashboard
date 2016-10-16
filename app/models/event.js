@@ -1,9 +1,15 @@
-Balanced.Event = Balanced.Model.extend({
-	transaction: Balanced.Model.belongsTo('entity', 'Balanced.Transaction'),
-	eventCallbacks: Balanced.Model.hasMany('callbacks', 'Balanced.EventCallback'),
+import Model from "./core/model";
+import Computed from "balanced-dashboard/utils/computed";
+
+var EventModel = Model.extend({
+	transaction: Model.belongsTo('entity', 'transaction'),
+	eventCallbacks: Model.hasMany('callbacks', 'event_callback'),
 	uri: '/events',
 	route_name: 'events',
-	page_title: Balanced.computed.fmt('type', 'id', '%@ #%@')
+	page_title: Computed.fmt('type', 'id', '%@ #%@'),
+	status: function() {
+		return this.get('type').split('.')[1];
+	}.property('type')
 });
 
-Balanced.TypeMappings.addTypeMapping('event', 'Balanced.Event');
+export default EventModel;

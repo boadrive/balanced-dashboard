@@ -1,0 +1,85 @@
+<thead>
+	<tr>
+		<th class="col-md-2 initiated date has-filter">
+			{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="initiated_at" actionName="changeDisputesSort"}}
+				<span>Initiated at</span>
+			{{/view}}
+		</th>
+		<th class="col-md-2 respond-by date has-filter">
+			{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="respond_by" actionName="changeDisputesSort"}}
+				<span>Respond by</span>
+			{{/view}}
+		</th>
+		<th class="col-md-2 status has-filter">
+			{{view "results/disputes-status-results-dropdown-filter"}}
+		</th>
+		{{#unless view.isSmallTable}}
+			<th class="col-md-3 account"><span>Customer</span></th>
+		{{/unless}}
+		<th class="col-md-2 funding-instrument"><span>Payment method</span></th>
+		<th class="col-md-2 amount num has-filter">
+			{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="amount" actionName="changeDisputesSort"}}
+				<span>Amount</span>
+			{{/view}}
+		</th>
+	</tr>
+</thead>
+
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=view.colspan}}
+{{/if}}
+
+<tbody>
+	{{#each dispute in view.loader.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell" routeName=dispute.route_name date=dispute.initiated_at item=dispute}}
+			{{view "tables/cells/linked-date-cell" routeName=dispute.route_name date=dispute.respond_by item=dispute}}
+			<td {{bind-attr class=":label4a :status"}}>
+				{{#link-to dispute.route_name dispute}}<span {{bind-attr class="dispute.status"}}>
+					{{sentence-case dispute.status}}
+				</span>{{/link-to}}
+			</td>
+			{{#unless view.isSmallTable}}
+				<td {{bind-attr class=":account :two-lines dispute.transaction.customer::null-field"}} {{bind-attr title="dispute.customer_name_summary"}}>
+					{{#link-to dispute.route_name dispute}}
+						{{#if dispute.customer_display_me}}
+							<span>
+								<span class="primary">{{dispute.customer_display_me}}</span>
+								{{#if dispute.customer_email}}
+									<span class="secondary">{{dispute.customer_email}}</span>
+								{{/if}}
+							</span>
+						{{else}}
+							<span class="sl-none">none</span>
+						{{/if}}
+					{{/link-to}}
+				</td>
+			{{/unless}}
+
+			<td class="funding-instrument two-lines">
+				{{#link-to dispute.route_name dispute}}
+					<span {{bind-attr class="dispute.transaction.dasherized_funding_instrument_type"}}>
+						<span class="primary">{{dispute.last_four_with_name}}</span>
+						<span class="secondary">{{dispute.funding_instrument_type}}</span>
+					</span>
+				{{/link-to}}
+			</td>
+
+			<td class="amount num">
+				{{#link-to dispute.route_name dispute}}
+					<span>{{format-currency dispute.amount}}</span>
+				{{/link-to}}
+			</td>
+		</tr>
+	{{else}}
+		<tr>
+			<td {{bind-attr colspan=view.colspan}} class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No disputes
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

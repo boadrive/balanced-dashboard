@@ -1,0 +1,37 @@
+<thead>
+	<tr>
+		<th class="col-md-2 label6a has-filter">{{#view "results/results-sortable-column-header" class="sortable unsorted" field="created_at"}}<span>Date</span>{{/view}}</th>
+		<th class="col-md-2 label6a has-filter endpoint-filter">
+			{{view "results/logs-endpoint-results-dropdown-filter" model=view.loader}}
+		</th>
+		<th class="col-md-2 label6a has-filter status-filter">
+			{{view "results/logs-status-results-dropdown-filter" model=view.loader}}
+		</th>
+		<th class="col-md-6 label6a"><span>Method &amp; URI</span></th>
+	</tr>
+</thead>
+
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=4}}
+{{/if}}
+
+<tbody>
+	{{#each log in view.loader.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell" routeName=log.route_name date=log.created_at item=log}}
+			{{view "tables/cells/titled-linked-cell" routeName=log.route_name item=log labelText=log.endpoint classNames="endpoint"}}
+			{{view "tables/cells/logs/log-status-cell" item=log classNames="status two-lines"}}
+			{{view "tables/cells/logs/log-description-cell" item=log}}
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="4" class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No logs
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

@@ -1,0 +1,42 @@
+<thead>
+	<tr>
+		<th class="col-md-3 date">
+			<span>Date</span>
+		</th>
+		<th class="col-md-3 status">
+			<span>Status</span>
+		</th>
+		<th class="col-md-6 description"><span>Method and URI</span></th>
+	</tr>
+</thead>
+<tbody>
+	{{#each log in view.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell"
+				item=log
+				routeName=log.route_name
+				date=log.created_at
+			}}
+			<td class="status">
+				{{#link-to log.route_name log}}
+					<span {{bind-attr class="log.status"}}>{{log.message.response.status}}</span>
+				{{/link-to}}
+			</td>
+			<td>
+				{{#link-to log.route_name log}}
+					<span>{{log.message.request.method}} {{log.condensed_request_url}}</span>
+				{{/link-to}}
+			</td>
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="3" class="no-results">
+				{{#if view.results.isLoaded}}
+					No logs
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

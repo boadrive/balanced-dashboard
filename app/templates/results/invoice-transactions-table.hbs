@@ -1,0 +1,58 @@
+<thead>
+	<tr>
+		<th class="col-md-3 date has-filter">
+			{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeTransactionsSort"}}
+				<span>Date</span>
+			{{/view}}
+		</th>
+		<th class="col-md-2 status has-filter">
+			{{view "results/transactions-status-results-dropdown-filter"}}
+		</th>
+		<th class="col-md-4 description"><span>Description</span></th>
+		<th class="col-md-3 amount num">
+			<span>Amount</span>
+		</th>
+	</tr>
+</thead>
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=4}}
+{{/if}}
+
+<tbody>
+	{{#each transaction in view.loader.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell"
+				item=transaction
+				routeName=transaction.route_name
+				date=transaction.created_at
+			}}
+			{{view "tables/cells/linked-text-cell"
+				item=transaction
+				labelText=transaction.status
+				routeName=transaction.route_name
+				spanClassNamesBinding="transaction.status"
+				classNames="status"
+				isStatusCell=true
+				titleBinding="transaction.status"
+			}}
+			{{view "tables/cells/linked-text-cell"
+				item=transaction
+				labelText=transaction.description
+				routeName=transaction.route_name
+				titleBinding="transaction.description"
+			}}
+
+			{{view "tables/cells/transaction/amount-cell" item=transaction}}
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="4" class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No statements
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

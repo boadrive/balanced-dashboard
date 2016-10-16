@@ -1,4 +1,7 @@
-Balanced.Claim = Balanced.Model.extend(Ember.Validations, {
+import Rev0Serializer from "../serializers/rev0";
+import Model from "./core/model";
+
+var Claim = Model.extend(Ember.Validations, {
 	uri: '/users',
 
 	validations: {
@@ -25,8 +28,8 @@ Balanced.Claim = Balanced.Model.extend(Ember.Validations, {
 	}
 });
 
-Balanced.Adapter.registerHostForType(Balanced.Claim, ENV.BALANCED.AUTH);
-
-Balanced.Claim.reopenClass({
-	serializer: Balanced.Rev0Serializer.create()
+Claim.reopenClass({
+	serializer: Rev0Serializer.create()
 });
+
+export default Claim;

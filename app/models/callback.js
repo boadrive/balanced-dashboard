@@ -1,3 +1,12 @@
-Balanced.Callback = Balanced.Model.extend();
+import Ember from "ember";
+import Model from "./core/model";
 
-Balanced.TypeMappings.addTypeMapping('callback', 'Balanced.Callback');
+var Callback = Model.extend(Ember.Validations, {
+	validations: {
+		url: {
+			presence: true
+		}
+	}
+});
+
+export default Callback;

@@ -1,0 +1,24 @@
+{{#view "import-payouts/import-payouts" id="upload-payments"}}
+	<h1 class="page-title">Import payouts</h1>
+	<form {{action "submit" on="submit" target="view"}} class="full-page-form">
+		{{title-bar icon="icon-document-upload" title=view.title}}
+
+		{{#if creditCreators.isDataMissing}}
+			{{partial 'import_payouts/instructions'}}
+		{{else}}
+			{{partial 'import_payouts/account_summary'}}
+			{{#if view.isPreviewable}}
+				<div class="csv-preview">
+					<h3>Preview data</h3>
+					{{#if creditCreators.isInvalid}}
+						{{view "import-payouts/marketplace-invalid-csv-payments-table" creditCreators=creditCreators items=creditCreators.invalid}}
+					{{/if}}
+
+					{{view "import-payouts/marketplace-valid-csv-payments-table" creditCreators=creditCreators items=creditCreators.valid}}
+					{{partial 'import_payouts/account_summary'}}
+					{{partial "import_payouts/submit_area"}}
+				</div>
+			{{/if}}
+		{{/if}}
+	</form>
+{{/view}}

@@ -1,29 +1,33 @@
-<h1 class="page-title">Hold</h1>
-
-<div id="hold" class="transaction">
-	<div class="title-block tb-egyptian-blue">
-		<span class="tb-icon">
-			<i class="icon icon-order"></i>
-		</span>
-		<span class="tb-content">
-			{{page_title}}
-		</span>
-	</div>
-
-	{{txn-customer customer=customer}}
-
-	<div class="transaction-details">
-		{{#if debit.dispute}}
-			{{txn-dispute dispute=debit.dispute}}
+{{#view "page-navigations/transaction-page-navigation" model=model}}
+	<div class="buttons page-actions">
+		{{#if can_void_or_capture}}
+			<a class="btn capture-hold-button" {{action "openModal" "modals/capture-hold-modal" view.model}}>Capture</a>
+			<a class="btn void-hold-button" {{action "openModal" "modals/void-hold-modal" view.model}}>Void</a>
 		{{/if}}
-
-		{{#if debit}}
-			{{#each refund in debit.refunds}}
-				{{txn-refund refund=refund}}
-			{{/each}}
-			{{txn-debit debit=debit}}
-		{{/if}}
-
-		{{txn-hold hold=model}}
 	</div>
-</div>
+{{/view}}
+
+{{#view "detail-views/body-panel"}}
+	{{#view "detail-views/api-model-panel" model=model}}
+		{{view "detail-views/summary-sections/hold-summary-section" model=model}}
+		{{view "detail-views/description-lists/transaction-titled-key-values-section" model=model}}
+		{{view "meta-list" type=model}}
+	{{/view}}
+
+	{{#view "detail-views/main-panel"}}
+		<h3>Associated transactions</h3>
+		<div class="results">
+			{{view "results/associated-transactions-table" transaction=model}}
+		</div>
+
+		<h3>Logs</h3>
+		<div class="results">
+			{{view "resource-logs" content=model}}
+		</div>
+
+		<h3>Events</h3>
+		<div class="results">
+			{{view "resource-events" content=model}}
+		</div>
+	{{/view}}
+{{/view}}

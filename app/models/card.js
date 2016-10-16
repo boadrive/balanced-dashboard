@@ -1,6 +1,9 @@
-require('app/models/funding_instrument');
+import Computed from "balanced-dashboard/utils/computed";
+import Constants from "balanced-dashboard/utils/constants";
+import FundingInstrument from "./funding-instrument";
+import Utils from "balanced-dashboard/lib/utils";
 
-Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
+var Card = FundingInstrument.extend(Ember.Validations, {
 	uri: '/cards',
 
 	validations: {
@@ -30,13 +33,23 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 		}
 	},
 
+	isCard: true,
+
 	type_name: function() {
 		if (this.get('type')) {
-			return this.get('type').capitalize() + ' card';
+			if (this.get('is_prepaid')) {
+				return 'Prepaid card';
+			} else {
+				return this.get('type').capitalize() + ' card';
+			}
 		} else {
 			return 'Card';
 		}
-	}.property('type'),
+	}.property('type', 'is_prepaid'),
+
+	status: function() {
+		return this.get('can_debit') ? 'active' : 'removed';
+	}.property('can_debit'),
 
 	is_prepaid: function() {
 		return this.get('category') === "prepaid";
@@ -44,9 +57,8 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 
 	route_name: 'cards',
 	postal_code: Ember.computed.alias('address.postal_code'),
-	is_bank_account: false,
-	appears_on_statement_max_length: Balanced.MAXLENGTH.APPEARS_ON_STATEMENT_CARD,
-	expected_credit_days_offset: Balanced.EXPECTED_CREDIT_DAYS_OFFSET.DEBIT_CARD,
+	appears_on_statement_max_length: Constants.MAXLENGTH.APPEARS_ON_STATEMENT_CARD,
+	expected_credit_days_offset: Constants.EXPECTED_DAYS_OFFSET.CREDIT_DEBIT_CARD,
 	page_title: Ember.computed.readOnly('displayName'),
 
 	last_four: function() {
@@ -56,12 +68,12 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 		} else {
 			return accountNumber.substr(accountNumber.length - 4, 4);
 		}
-	}.property('account_number'),
+	}.property('number'),
 
 	description: function() {
 		return '%@ %@'.fmt(
 			this.get('last_four'),
-			Balanced.Utils.toTitleCase(this.get('brand'))
+			Utils.toTitleCase(this.get('brand'))
 		);
 	}.property('last_four', 'brand'),
 
@@ -69,11 +81,11 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 		return '%@ (%@ %@)'.fmt(
 			this.get('name'),
 			this.get('last_four'),
-			Balanced.Utils.toTitleCase(this.get('brand'))
+			Utils.toTitleCase(this.get('brand'))
 		);
 	}.property('name', 'last_four', 'brand'),
 
-	human_readable_expiration: Balanced.computed.fmt('expiration_month', 'expiration_year', '%@/%@'),
+	human_readable_expiration: Computed.fmt('expiration_month', 'expiration_year', '%@/%@'),
 
 	tokenizeAndCreate: function(customerId) {
 		var self = this;
@@ -109,7 +121,7 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 		// Tokenize the card using the balanced.js library
 		balanced.card.create(cardData, function(response) {
 			if (response.errors) {
-				var validationErrors = Balanced.Utils.extractValidationErrorHash(response);
+				var validationErrors = Utils.extractValidationErrorHash(response);
 				self.setProperties({
 					validationErrors: validationErrors,
 					isSaving: false
@@ -126,7 +138,7 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 
 				promise.reject(validationErrors);
 			} else {
-				Balanced.Card.find(response.cards[0].href)
+				Card.find(response.cards[0].href)
 
 				// Now that it's been tokenized, we just need to associate it with the customer's account
 				.then(function(card) {
@@ -149,4 +161,26 @@ Balanced.Card = Balanced.FundingInstrument.extend(Ember.Validations, {
 	}
 });
 
-Balanced.TypeMappings.addTypeMapping('card', 'Balanced.Card');
+Card.reopenClass({
+	findCreatedCard: function(uri) {
+		var deferred = Ember.RSVP.defer();
+		var modelClass = this;
+
+		this
+			.getAdapter()
+			.get(modelClass, uri, function(json) {
+				var modelObject = modelClass.create({
+					uri: uri,
+					isLoaded: false,
+					isNew: false
+				});
+				modelObject.populateFromJsonResponse(json, uri);
+				deferred.resolve(modelObject);
+			}, function(errorsResponse) {
+				deferred.reject(errorsResponse.responseJSON);
+			});
+		return deferred.promise;
+	},
+});
+
+export default Card;

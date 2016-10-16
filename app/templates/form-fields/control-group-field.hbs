@@ -1,0 +1,10 @@
+<div class="controls">
+	{{view Ember.TextField value=view.value placeholder=view.placeholder name=view.field type=view.type}}
+</div>
+<label class="control-label" {{bind-attr for="view.field"}}>
+	{{view.labelForField}}
+
+	{{#if view.recommendedField}}
+		<span class="recommended-field">Recommended field</span>
+	{{/if}}
+</label>

@@ -1,5 +1,8 @@
-Balanced.MarketplacesController = Balanced.ArrayController.extend({
-	needs: ['marketplace', 'application', 'marketplaces'],
-	marketplace: Ember.computed.oneWay('controllers.marketplace'),
-	isApplyPage: Ember.computed.equal('controllers.application.currentRouteName', 'marketplaces.apply')
+import Ember from "ember";
+
+var MarketplacesController = Ember.ArrayController.extend({
+	needs: ["marketplace", "application"]
 });
+
+
+export default MarketplacesController;

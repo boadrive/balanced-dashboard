@@ -1,15 +1,28 @@
+import Ember from "ember";
+import AnalyticsLogger from "balanced-dashboard/utils/analytics_logger";
+
 var INFINITE_LOOP_DURATION_MILLIS = 2500;
 var INFINITE_LOOP_NUM_ERRORS = 5;
 
-Balanced.ApplicationRoute = Balanced.Route.extend(Ember.Evented, {
+var ApplicationRoute = Ember.Route.extend(Ember.Evented, {
 	init: function() {
 		this.set('errorTimestamps', []);
 	},
 
 	actions: {
-		openModal: function() {
-			var args = ["openModal"].concat(_.toArray(arguments));
-			this.trigger.apply(this, args);
+		closeModal: function() {
+			return this
+				.container
+				.lookup("controller:modals_container")
+				.close();
+		},
+
+		openModal: function(klass) {
+			var container = this.get("container");
+			var args = _.toArray(arguments).slice(1);
+			return container
+				.lookup("controller:modals_container")
+				.open(klass, args);
 		},
 
 		error: function(error, transition) {
@@ -46,7 +59,7 @@ Balanced.ApplicationRoute = Balanced.Route.extend(Ember.Evented, {
 				this.get('auth').forgetLastUsedMarketplaceUri();
 			}
 
-			Balanced.Analytics.trackEvent('route-error', {
+			AnalyticsLogger.trackEvent('route-error', {
 				type: 'error-loading-route',
 				location: window.location.toString(),
 				statusCode: statusCode
@@ -57,12 +70,8 @@ Balanced.ApplicationRoute = Balanced.Route.extend(Ember.Evented, {
 					// if we loaded an ember object and got a 401/403, let's forget about the transition
 					this.get('auth').set('attemptedTransition', null);
 
-					this.controllerFor('application').alert({
-						message: 'You are not permitted to access this resource.',
-						type: 'error',
-						persists: true
-					});
-
+					this.controllerFor("notification_center")
+						.alertError('You are not permitted to access this resource.');
 					this.transitionTo('marketplaces');
 				} else if (transition) {
 					this.get('auth').set('attemptedTransition', transition);
@@ -73,35 +82,32 @@ Balanced.ApplicationRoute = Balanced.Route.extend(Ember.Evented, {
 					this.transitionTo('login');
 				}
 			} else if (statusCode === 404) {
-				this.controllerFor('application').alert({
-					message: "Couldn't find the resource for this page, please make sure the URL is valid.",
-					type: 'error',
-					persists: true
-				});
-
+				this.controllerFor("notification_center")
+					.alertError("Couldn't find the resource for this page, please make sure the URL is valid.");
 				this.transitionTo('marketplaces');
 			} else {
-				this.controllerFor('application').alert({
-					message: 'There was an error loading this page.',
-					type: 'error',
-					persists: true
-				});
+				var controller = this.controllerFor("notification_center");
+				var name = "PageLoadError";
 
+				controller.clearNamedAlert(name);
+				controller
+					.alertError('There was an error loading this page.', {
+						name: name
+					});
 				this.transitionTo('marketplaces');
 			}
 		},
 
 		willTransition: function() {
-			this.controllerFor('search').send('closeSearch');
-			this.controllerFor('application').alertTransition();
-		},
-
-		alert: function(options) {
-			this.controllerFor('application').alert(options);
+			this.controllerFor('modals_container').close();
+			this.controllerFor('notification_center').expireAlerts();
 		},
 
 		signOut: function() {
+			this.controllerFor('notification_center').clearAlerts();
 			this.transitionTo('logout');
 		}
 	}
 });
+
+export default ApplicationRoute;

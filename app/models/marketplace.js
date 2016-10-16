@@ -1,23 +1,72 @@
-require('app/models/user_marketplace');
+import Rev1Serializer from "../serializers/rev1";
+import UserMarketplace from "./user-marketplace";
+import SearchModelArray from "./core/search-model-array";
+import Model from "./core/model";
+import Utils from "balanced-dashboard/lib/utils";
+import Ajax from "balanced-dashboard/lib/ajax";
+import ENV from "balanced-dashboard/config/environment";
 
-Balanced.Marketplace = Balanced.UserMarketplace.extend({
+var ORDERS_DATE = moment("2014-11-07").utc().startOf("day");
+
+var getResultsLoader = function(loaderClassName, attributes) {
+	return BalancedApp.__container__.lookupFactory("results-loader:" + loaderClassName).create(attributes);
+};
+
+var generateResultsLoader = function(loaderClassName, uriFieldName) {
+	return function(attributes) {
+		attributes = _.extend({
+			path: this.get(uriFieldName)
+		}, attributes);
+		return getResultsLoader(loaderClassName, attributes);
+	};
+};
+
+var Marketplace = UserMarketplace.extend({
 	uri: '/marketplaces',
 
-	credits: Balanced.Model.hasMany('credits', 'Balanced.Credit'),
-	debits: Balanced.Model.hasMany('debits', 'Balanced.Debit'),
-	// disputes: Balanced.Model.hasMany('disputes', 'Balanced.Dispute'),
-	refunds: Balanced.Model.hasMany('refunds', 'Balanced.Refund'),
-	holds: Balanced.Model.hasMany('holds', 'Balanced.Hold'),
-	transactions: Balanced.Model.hasMany('transactions', 'Balanced.Transaction'),
-	callbacks: Balanced.Model.hasMany('callbacks', 'Balanced.Callback'),
+	getInvoicesLoader: generateResultsLoader("invoices", "invoices_uri"),
+	getCustomersLoader: generateResultsLoader("customers", "customers_uri"),
+	getDisputesLoader: generateResultsLoader("disputes", "disputes_uri"),
+	getTransactionsLoader: generateResultsLoader("transactions", "transactions_uri"),
+	getOrdersLoader: generateResultsLoader("orders", "orders_uri"),
+	getFundingInstrumentsLoader: function(attributes) {
+		attributes = _.extend({
+			marketplace: this
+		}, attributes);
+		return getResultsLoader("funding-instruments", attributes);
+	},
+	getLogsLoader: function(attributes) {
+		attributes = _.extend({}, attributes);
+		return getResultsLoader("logs", attributes);
+	},
 
-	funding_instruments: Balanced.Model.hasMany('funding_instruments', 'Balanced.FundingInstrument'),
-	bank_accounts: Balanced.Model.hasMany('bank_accounts', 'Balanced.BankAccount'),
-	cards: Balanced.Model.hasMany('cards', 'Balanced.Card'),
+	getSearchLogsLoader: function(attributes) {
+		attributes = _.extend({}, attributes);
+		return getResultsLoader("search-logs", attributes);
+	},
 
-	owner_customer: Balanced.Model.belongsTo('owner_customer', 'Balanced.Customer'),
+	getSearchLoader: function(attributes) {
+		attributes = _.extend({
+			marketplace: this
+		}, attributes);
+		return getResultsLoader("marketplace-search", attributes);
+	},
 
-	customers: Balanced.Model.hasMany('customers', 'Balanced.Customer'),
+	credits: Model.hasMany('credits', 'credit'),
+	debits: Model.hasMany('debits', 'debit'),
+	// disputes: Model.hasMany('disputes', 'dispute'),
+	refunds: Model.hasMany('refunds', 'refund'),
+	holds: Model.hasMany('holds', 'hold'),
+	transactions: Model.hasMany('transactions', 'transaction'),
+	callbacks: Model.hasMany('callbacks', 'callback'),
+
+	funding_instruments: Model.hasMany('funding_instruments', 'funding-instrument'),
+	bank_accounts: Model.hasMany('bank_accounts', 'bank-account'),
+	cards: Model.hasMany('cards', 'card'),
+
+	owner_customer: Model.belongsTo('owner_customer', 'customer'),
+
+	customers: Model.hasMany('customers', 'customer'),
 
 	// TODO - take this out once marketplace has a link to invoices list
 	users_uri: function() {
@@ -27,10 +76,14 @@ Balanced.Marketplace = Balanced.UserMarketplace.extend({
 	invoices_uri: '/invoices',
 	disputes_uri: '/disputes',
 
+	isMigrationStarted: Ember.computed("meta", function() {
+		return this.get("meta") && !Ember.isBlank(this.get("meta")["stripe.account_id"]);
+	}),
+
 	populateWithTestTransactions: function() {
 		//  pre-populate marketplace with transactions
 		var id = this.get('id');
-		Balanced.NET.ajax({
+		Ajax.ajax({
 			url: ENV.BALANCED.AUTH + '/marketplaces/%@/spam'.fmt(id),
 			type: 'PUT'
 		});
@@ -45,33 +98,29 @@ Balanced.Marketplace = Balanced.UserMarketplace.extend({
 			query: query
 		}, params);
 
-		var resultsUri = Balanced.Utils.applyUriFilters(baseUri, searchParams);
-		return Balanced.SearchModelArray.newArrayLoadedFromUri(resultsUri, resultsType);
+		var resultsUri = Utils.applyUriFilters(baseUri, searchParams);
+		return SearchModelArray.newArrayLoadedFromUri(resultsUri, resultsType);
 	},
 
 	has_debitable_bank_account: Ember.computed.readOnly('owner_customer.has_debitable_bank_account'),
-	has_bank_account: Ember.computed.readOnly('owner_customer.has_bank_account')
+	has_bank_account: Ember.computed.readOnly('owner_customer.has_bank_account'),
+
+	isOrdersRequired: function() {
+		return ORDERS_DATE.isBefore(this.get("created_at"));
+	}.property("created_at"),
 });
 
-Balanced.TypeMappings.addTypeMapping('marketplace', 'Balanced.Marketplace');
-
-Balanced.Marketplace.reopenClass({
-	serializer: Balanced.Rev1Serializer.create(),
-}, {
-	COMPANY_TYPES: [{
-		value: "llc",
-		label: "LLC"
-	}, {
-		value: "s-corp",
-		label: "S-Corp"
-	}, {
-		value: "c-corp",
-		label: "C-Corp"
-	}, {
-		value: "partnership",
-		label: "Partnership"
-	}, {
-		value: "sole-proprietorship",
-		label: "Sole Proprietorship"
-	}]
+Marketplace.reopenClass({
+	findByApiKeySecret: function(secret) {
+		return this.find("/marketplaces", {
+			secret: secret
+		});
+	},
+	findById: function(id) {
+		var uri = this.constructUri(id);
+		return this.find(uri);
+	},
+	serializer: Rev1Serializer.create(),
 });
+
+export default Marketplace;

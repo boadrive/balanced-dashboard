@@ -1,9 +1,10 @@
-require('app/models/transaction');
+import Transaction from "./transaction";
+import Model from "./core/model";
 
-Balanced.Settlement = Balanced.Transaction.extend({
-	debit: Balanced.Model.belongsTo('debit', 'Balanced.Debit'),
+var Settlement = Transaction.extend({
+	debit: Model.belongsTo('debit', 'debit'),
 	type_name: 'settlement',
 	route_name: 'Settlement'
 });
 
-Balanced.TypeMappings.addTypeMapping('settlement', 'Balanced.Settlement');
+export default Settlement;

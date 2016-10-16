@@ -1,0 +1,54 @@
+<table class="items">
+	<thead>
+		<tr>
+			<th class="col-md-3 date">
+				<span>Date</span>
+			</th>
+			<th class="col-md-6">
+				<span>File</span>
+			</th>
+			<th class="col-md-3 num"><span>Size</span></th>
+		</tr>
+	</thead>
+	<tbody>
+	{{#each doc in view.content.documents}}
+		<tr>
+			{{view "tables/cells/linked-date-cell"
+				item=doc
+				href=doc.file_url
+				date=doc.created_at
+			}}
+			<td>
+				<a {{bind-attr href="doc.file_url"}}><span>{{doc.file_name}}</span></a>
+			</td>
+			<td class="num">
+				<a {{bind-attr href="doc.file_url"}}><span>{{format-file-size doc.size}}</span></a>
+			</td>
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="3" class="no-results">
+				{{#if view.content.isLoaded}}
+					No documents
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>
+
+{{#if view.content.isEvidenceProvided}}
+	<dl class="dispute-note">
+		{{#if view.content.justitia_dispute.tracking_number}}
+			<dt>Tracking number</dt>
+			<dd>{{view.content.justitia_dispute.tracking_number}}</dd>
+		{{/if}}
+
+		{{#if view.content.justitia_dispute.note}}
+			<dt>Note</dt>
+			<dd>{{view.content.justitia_dispute.note}}</dd>
+		{{/if}}
+	</dl>
+{{/if}}

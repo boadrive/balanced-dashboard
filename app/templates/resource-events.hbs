@@ -1,0 +1,44 @@
+<table class="items">
+	<thead>
+		<tr>
+			<th class="col-md-3 date">
+				<span>Date</span>
+			</th>
+			<th class="col-md-3 status">
+				<span>Status</span>
+			</th>
+			<th class="col-md-6 event"><span>Event name</span></th>
+		</tr>
+	</thead>
+	<tbody>
+	{{#each event in view.content.events}}
+		<tr>
+			{{view "tables/cells/linked-date-cell"
+				item=event
+				routeName=event.route_name
+				date=event.occurred_at
+			}}
+			<td class="status">
+				{{#link-to 'events' event}}
+					<span {{bind-attr class="event.status"}}>{{sentence-case event.status}}</span>
+				{{/link-to}}
+			</td>
+			<td>
+				{{#link-to 'events' event}}
+					<span>{{event.type}}</span>
+				{{/link-to}}
+			</td>
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="3" class="no-results">
+				{{#if view.content.isLoaded}}
+					No events
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>

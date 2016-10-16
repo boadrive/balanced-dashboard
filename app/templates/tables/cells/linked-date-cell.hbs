@@ -1,0 +1,19 @@
+{{#if view.href}}
+	<a {{bind-attr href=view.href data-track-event=view.eventTrackerText}}>
+		<span>
+			<time {{bind-attr datetime="view.date" title="view.date"}}>
+				<span class="primary">{{human-readable-date view.date}}</span>
+				<span class="secondary">{{human-readable-time view.date}}</span>
+			</time>
+		</span>
+	</a>
+{{else}}
+	{{#link-to view.routeName view.item data-track-event=view.eventTrackerText}}
+		<span>
+			<time {{bind-attr datetime="view.date" title="view.date"}}>
+				<span class="primary">{{human-readable-date view.date}}</span>
+				<span class="secondary">{{human-readable-time view.date}}</span>
+			</time>
+		</span>
+	{{/link-to}}
+{{/if}}

@@ -1,0 +1,107 @@
+<thead>
+	<tr>
+		<th class="col-md-2 date has-filter">
+		{{#if view.isSearch}}
+			{{#view "results/search-results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+				<span>Date</span>
+			{{/view}}
+		{{else}}
+			{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+				<span>Date</span>
+			{{/view}}
+		{{/if}}
+		</th>
+		<th class="col-icon unlinked-status">
+		</th>
+		<th class="col-md-2 type has-filter">
+			{{#if view.isSearch}}
+				{{view "results/transactions-type-search-results-dropdown-filter"}}
+			{{else}}
+				{{view "results/transactions-type-results-dropdown-filter"}}
+			{{/if}}
+		</th>
+		<th class="col-md-2 status has-filter">
+			{{#if view.isSearch}}
+				{{view "results/search-transactions-status-results-dropdown-filter"}}
+			{{else}}
+				{{view "results/transactions-status-results-dropdown-filter"}}
+			{{/if}}
+		</th>
+		<th class="col-md-3 description"><span>Description</span></th>
+		<th class="col-md-2 account"><span>Customer</span></th>
+		<th class="col-md-2 funding-instrument"><span>Payment method</span></th>
+		<th class="col-md-2 amount num">
+			<span>Amount</span>
+		</th>
+	</tr>
+</thead>
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=7}}
+{{/if}}
+
+<tbody>
+	{{#each transaction in view.loader.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell"
+				item=transaction
+				routeName=transaction.route_name
+				date=transaction.created_at
+			}}
+			{{#if view.showUnlinkedTransactionsIcon}}
+				{{view "tables/cells/transaction/unlinked-status-cell"
+					item=transaction
+					isUnlinked=transaction.isUnlinked
+					classNames="unlinked-status"
+					routeName=transaction.route_name
+				}}
+			{{else}}
+				<td></td>
+			{{/if}}
+			{{view "tables/cells/linked-text-cell"
+				item=transaction
+				labelText=transaction.type_name
+				routeName=transaction.route_name
+				classNames="type"
+				title=transaction.type_name
+			}}
+			{{view "tables/cells/linked-text-cell"
+				item=transaction
+				labelText=transaction.status
+				routeName=transaction.route_name
+				spanClassNames=transaction.status
+				classNames="status"
+				isStatusCell=true
+				title=transaction.status
+			}}
+			{{view "tables/cells/linked-text-cell"
+				item=transaction
+				labelText=transaction.description
+				routeName=transaction.route_name
+				title=transaction.description
+			}}
+
+			{{view "tables/cells/transaction/customer-cell" item=transaction}}
+
+			{{view "tables/cells/linked-two-lines-cell"
+				item=transaction
+				routeName=transaction.route_name
+				classNames="funding-instrument"
+				primaryLabelText=transaction.last_four
+				secondaryLabelText=transaction.funding_instrument_type
+				title=transaction.funding_instrument_type
+			}}
+
+			{{view "tables/cells/transaction/amount-cell" item=transaction}}
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="8" class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No transactions
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

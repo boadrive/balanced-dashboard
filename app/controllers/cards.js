@@ -1,17 +1,27 @@
-Balanced.CardsController = Balanced.ObjectController.extend(
-	Balanced.ActionEvented('openDebitFundingInstrumentModal', 'openCreditFundingInstrumentModal', 'openHoldCardModal'),
-	Balanced.ResultsTable, {
-		needs: ['marketplace'],
+import Ember from "ember";
+import actionEvented from "./mixins/action-evented";
 
-		sortField: 'created_at',
-		sortOrder: 'desc',
+var EventMixin = actionEvented('openDebitFundingInstrumentModal', 'openCreditFundingInstrumentModal', 'openHoldCardModal');
 
-		baseClassSelector: "#card",
+var CardsController = Ember.ObjectController.extend(EventMixin, {
+	needs: ['marketplace'],
 
-		results_base_uri: function() {
-			return this.get('type') === 'dispute' ?
-				'/disputes' :
-				this.get("content.transactions_uri");
-		}.property("type", "content.transactions_uri")
+	actions: {
+		changeTypeFilter: function(type) {
+			if (type === "transaction") {
+				type = null;
+			}
+			this.set("transactionsResultsLoader.type", type);
+		},
+
+		changeTransactionsSort: function(column) {
+			this.get("transactionsResultsLoader").setSortField(column);
+		},
+
+		changeStatusFilter: function(status) {
+			this.get("transactionsResultsLoader").setStatusFilter(status);
+		},
 	}
-);
+});
+
+export default CardsController;

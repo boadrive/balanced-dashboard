@@ -1,0 +1,178 @@
+.form-horizontal:not(.split-labels) {
+  .control-group {
+    margin: 2px 0 2px 0;
+  }
+  .control-label {
+    text-align: left;
+    width: 40%;
+  }
+  .controls {
+    margin-left: auto;
+    width: 60%;
+  }
+}
+
+.form-horizontal {
+  &.split-labels {
+    .control-label {
+      text-align: left;
+    }
+  }
+
+  .controls {
+    margin-left: 170px;
+    &.inline-control {
+      select, input {
+        width: 100px;
+      }
+    }
+
+    &.text-label {
+      padding-top: 5px;
+    }
+  }
+}
+
+.edit-inline {
+  input, select {
+    display: none;
+  }
+  .header-action-container {
+    display: inline;
+  }
+  a.edit {
+    .sl;
+    float: right;
+    .cssicon(
+      @url: @iconsFile,
+      @width: 14px,
+      @height: 14px,
+      @display: block
+    );
+    background-position: -18px -438px;
+    &:hover {
+      background-position: -68px -438px;
+    }
+  }
+  a.disclosure {
+    .sl;
+    float: right;
+    .cssicon(
+      @url: @iconsFile,
+      @width: 14px,
+      @height: 14px,
+      @display: block
+    );
+    background-position: -18px -847px;
+    &:hover {
+      background-position: -68px -847px;
+    }
+    &.open {
+      background-position: -118px -847px;
+      &:hover {
+        background-position: -168px -847px;
+      }
+    }
+  }
+  &.edit {
+    input, select {
+      display: inherit;
+    }
+    .inline-label {
+      display: none;
+    }
+    .inline-edit {
+      background-color: @gray6;
+      color: #d9d9d9;
+    }
+  }
+  .inline-label {
+    padding-top: 5px;
+    display: inline-block;
+  }
+  .help-inline {
+    margin: 0;
+  }
+}
+
+.control-group {
+  margin-bottom: 0;
+  &.error {
+    &.critical {
+    }
+  }
+}
+
+.recommended-field {
+  .sl;
+  font-style: italic;
+}
+
+5px 0 10px
+
+.file-drop {
+  background-color: @gray0;
+  border: 2px dotted @gray3;
+  height: 170px;
+  padding: 30px 45px;
+  text-align: center;
+
+  .fileinput-button {
+    background-color: rgba(255, 255, 255, 0.6);
+  }
+
+  &.dragging {
+    background-color: @white;
+  }
+
+  p {
+    .sl-sb;
+    margin-bottom: 15px;
+  }
+
+  .icon-upload {
+    .sl-44;
+    line-height: 30px;
+  }
+}
+
+/* admin */
+
+.admin-search-form {
+  text-align: center;
+  margin-bottom: 20px;
+
+  .search-field {
+    width: 50%;
+    margin: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  input[type="text"] {
+    text-align: center;
+    font-size: 32px !important;
+    border: 0px !important;
+    border-bottom: 1px @gray2 solid !important;
+  }
+}
+
+section[class$="-info"] {
+  td {
+    input[type="text"] {
+      height: auto;
+      margin-bottom: 0px;
+    }
+  }
+}
+
+.marketplace-abilities-info {
+  th {
+    width: 180px;
+    font-size: 14px;
+  }
+}
+
+.modal-content input.full-width {
+  width: 100%;
+}

@@ -1,0 +1,96 @@
+<thead>
+	<tr>
+		<th class="col-md-2 date has-filter">
+			{{#if view.isSearch}}
+				{{#view "results/search-results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+					<span>Date</span>
+				{{/view}}
+			{{else}}
+				{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+					<span>Date</span>
+				{{/view}}
+			{{/if}}
+		</th>
+		<th class="col-md-2 label6a funding-instruments has-filter">
+			{{#if view.isSearch}}
+				{{view "results/search-payment-methods-results-dropdown-filter"}}
+			{{else}}
+				{{view "results/payment-methods-results-dropdown-filter" model=view.loader}}
+			{{/if}}
+		</th>
+		<th class="col-md-2 label6a"><span>Status</span></th>
+		<th class="col-md-2 label6a"><span>Bank</span></th>
+		<th class="col-md-2 label6a"><span>Account holder</span></th>
+		<th class="col-md-2 label6a"><span>Customer</span></th>
+	</tr>
+</thead>
+
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=6}}
+{{/if}}
+
+<tbody>
+	{{#each funding_instrument in view.loader.results}}
+		<tr>
+			<td class="two-lines">
+				{{#link-to funding_instrument.route_name funding_instrument}}<span>
+					<time {{bind-attr datetime="funding_instrument.created_at"}} {{bind-attr title="funding_instrument.created_at"}}>
+						<span class="primary">{{human-readable-date funding_instrument.created_at}}</span>
+						<span class="secondary">{{human-readable-time funding_instrument.created_at}}</span>
+					</time>
+				</span>{{/link-to}}
+			</td>
+			<td class="two-lines">
+				{{#link-to funding_instrument.route_name funding_instrument}}<span {{bind-attr title="funding_instrument.description"}}>
+					<span class="primary">{{funding_instrument.last_four}} {{#if funding_instrument.brand}}{{funding_instrument.brand}}{{/if}}</span>
+					<span class="secondary">{{funding_instrument.funding_instrument_type}}</span>
+				</span>{{/link-to}}
+			</td>
+			<td class="status">
+				{{#link-to funding_instrument.route_name funding_instrument}}
+					<span {{bind-attr class="funding_instrument.status"}}>{{funding_instrument.status}}</span>
+				{{/link-to}}
+			</td>
+			<td>
+				{{#link-to funding_instrument.route_name funding_instrument}}
+					{{#if funding_instrument.formatted_bank_name}}
+						<span>{{funding_instrument.formatted_bank_name}}</span>
+					{{else}}
+						<span class="sl-none">unknown</span>
+					{{/if}}
+				{{/link-to}}
+			</td>
+			<td>
+				{{#link-to funding_instrument.route_name funding_instrument}}
+					{{#if funding_instrument.name}}
+						<span>{{funding_instrument.name}}</span>
+					{{else}}
+						<span class="sl-none">none</span>
+					{{/if}}
+				{{/link-to}}
+			</td>
+			<td class="two-lines">
+				{{#link-to funding_instrument.route_name funding_instrument}}<span>
+						{{#if funding_instrument.customer.display_me}}
+							<span class="primary">{{funding_instrument.customer.display_me}}</span>
+							{{#if funding_instrument.customer.email}}
+								<span class="secondary">{{funding_instrument.customer.email}}</span>
+							{{/if}}
+						{{else}}
+							<span class="sl-none">none</span>
+						{{/if}}
+				</span>{{/link-to}}
+			</td>
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="6" class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No payment methods
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>

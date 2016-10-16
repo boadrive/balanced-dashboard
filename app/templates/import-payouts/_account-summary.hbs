@@ -1,0 +1,32 @@
+<div class="table-summary">
+	<table class="table">
+		<tbody>
+		  <tr>
+			<td>Current escrow balance</td>
+			<td class="number3a column-total">{{format-currency view.escrowTotal}}</td>
+
+		  </tr>
+		  <tr>
+			<td>Total payouts</td>
+			<td class="number3a column-total">{{format-currency view.payoutTotal}}</td>
+		  </tr>
+		  <tr>
+			<td>Escrow balance after payouts</td>
+			<td {{bind-attr class=":number3a :column-total view.isEscrowValid::column-error"}}>{{format-currency view.escrowDifference}}</td>
+		  </tr>
+		</tbody>
+	</table>
+</div>
+
+{{#unless view.isEscrowValid}}
+	<div class="form-footer">
+		<div class="pull-right">
+			<button class="btn secondary" {{action "reset" target="view"}}>Back</button>
+			<button class="add-funds-btn" {{action "openModal" "modals/add-funds-modal" controllers.marketplace.model}}>Add funds</button>
+		</div>
+
+		<div class="message-error">
+			<p>You do not have sufficient funds in escrow to submit this payout. Add funds to proceed.</p>
+		</div>
+	</div>
+{{/unless}}

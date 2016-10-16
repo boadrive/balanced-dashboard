@@ -1,0 +1,13 @@
+{{#view "form-fields/form-section" model=view.model sectionTitle="Create your account"}}
+	{{view "form-fields/text-form-field" model=view.model inputClassNames="full"
+		field="email_address"
+		labelText="Email"
+		inputName="email_address"
+	}}
+
+	{{view "form-fields/base-form-field" model=view.model inputClassNames="full" inputType="password"
+		inputName="password" field="password" labelText="Password"}}
+
+	{{view "form-fields/base-form-field" model=view.model inputClassNames="full" inputType="password"
+		inputName="passwordConfirm" field="passwordConfirm" labelText="Re-enter password"}}
+{{/view}}

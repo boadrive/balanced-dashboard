@@ -1,0 +1,36 @@
+{{#view "page-navigations/page-navigation" pageType=model.type_name title=model.title_description}}
+	{{#unless model.isRemoved}}
+		<div class="buttons page-actions">
+			{{#if can_debit}}
+				<a class="btn debit-button" {{action "openModal" "modals/debit-funding-instrument-modal" model}}>Debit</a>
+			{{/if}}
+			{{#if can_credit}}
+				<a class="btn credit-button" {{action "openModal" "modals/credit-funding-instrument-modal" model}}>Credit</a>
+			{{/if}}
+		</div>
+	{{/unless}}
+{{/view}}
+
+{{#view "detail-views/body-panel"}}
+	{{#view "detail-views/api-model-panel" model=model}}
+		{{view detail-views/summary-sections/bank-account-summary-section model=model}}
+		{{view detail-views/description-lists/bank-account-titled-key-values-section model=model}}
+		{{view "meta-list" type=model}}
+	{{/view}}
+
+	{{#view "detail-views/main-panel"}}
+		<h3>Payments</h3>
+		<div class="results">
+			{{view "results/embedded-transactions-table" loader=transactionsResultsLoader}}
+		</div>
+		<h3>Logs</h3>
+		<div class="results">
+			{{view "resource-logs" content=model}}
+		</div>
+
+		<h3>Events</h3>
+		<div class="results">
+			{{view "resource-events" content=model}}
+		</div>
+	{{/view}}
+{{/view}}

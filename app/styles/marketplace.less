@@ -1,0 +1,167 @@
+@marketplaceActionIconSize: 37px;
+
+.test-marketplace-label {
+	font-style: italic;
+}
+
+#marketplace-actions {
+  position: absolute;
+  right: -@marketplaceActionIconSize;
+  top: @marketplaceActionIconSize;
+  float: right;
+  li {
+    margin-bottom: 2px;
+    background-color: red;
+    &.add-customer {
+      background-color: @byzantiumPurple60;
+      a {
+        background-position: -56px -626px;
+      }
+    }
+    &.pay-seller {
+      background-color: @persianBlue60;
+      a {
+        background-position: -6px -626px;
+      }
+    }
+  }
+  a {
+    .cssicon(
+      @url: @iconsFile,
+      @width: @marketplaceActionIconSize,
+      @height: @marketplaceActionIconSize,
+      @display: block
+    );
+    &:hover {
+      background-color: @black;
+    }
+  }
+}
+
+form {
+  .search-marketplace-query {
+    input {
+      width: 600px;
+    }
+  }
+}
+
+.marketplace-list {
+  margin-bottom: 60px;
+
+  &.search {
+    li {
+      input {
+        width: 175px;
+        margin: 12px 0;
+        float: right;
+      }
+      .dl-horizontal {
+        display: inline-block;
+        width: 100px;
+        margin: 17px 0;
+
+        dd {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+
+  .icon-addproductionmp, .icon-addtestmp {
+    font-size: 54px;
+  }
+
+  .icon-productionmp, .icon-testmp {
+    font-size: 42px;
+  }
+
+  .icon-docs {
+    font-size: 33px;
+  }
+
+  .name {
+    .sl-md;
+    color: @white;
+  }
+
+  .icon {
+    display: block;
+    height: 65px;
+    width: 65px;
+  }
+
+  .label {
+    color: @white;
+    float: left;
+    height: 65px;
+    line-height: 83px;
+    text-align: center;
+    width: 65px;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .loader {
+    float: right;
+    margin-top: 7px;
+  }
+
+  li {
+    margin: 5px 0;
+    position: relative;
+    .delete {
+      float: right;
+    }
+    .info {
+      height: 65px;
+      line-height: 65px;
+      overflow: hidden;
+      padding-left: 20px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    input {
+      width: 325px;
+    }
+    .btn {
+      margin: 17px 15px;
+      float: right;
+      width: 75px;
+    }
+  }
+
+  .mpTitleDefinition(@bgColor, @labelColor) {
+    background-color: @bgColor;
+    .label{
+      background-color: @labelColor;
+    }
+  }
+
+  .mp-production {
+    .mpTitleDefinition(@pineGreen60, @pineGreen100);
+  }
+  .mp-test {
+    .mpTitleDefinition(@curryYellow60, @curryYellow100);
+  }
+  .mp-new {
+    .mpTitleDefinition(@gray1, @gray3);
+  }
+  .mp-register {
+    .mpTitleDefinition(@turquoise60, @turquoise100);
+  }
+}
+.create-api-key {
+  .control-group {
+    margin-top: 20px;
+  }
+}
+.delete-key {
+  white-space: normal;
+  word-break: break-all;
+  ul {
+    margin-top: 20px;
+  }
+}

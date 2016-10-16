@@ -1,21 +1,46 @@
-Balanced.Dispute = Balanced.Model.extend(Ember.Validations, {
-	transaction: Balanced.Model.belongsTo('transaction', 'Balanced.Transaction'),
-	events: Balanced.Model.hasMany('events', 'Balanced.Event'),
-	documents: Balanced.Model.hasMany('dispute_documents', 'Balanced.DisputeDocument'),
-	dispute_note: Ember.computed.oneWay('note'),
-	isDocumentsLoaded: function() {
-		if (this.get('documents.length') > 0) {
-			return this.get('documents.isLoaded');
+import Ember from "ember";
+import Computed from "../utils/computed";
+import Model from "./core/model";
+
+var Dispute = Model.extend(Ember.Validations, {
+	transaction: Model.belongsTo('transaction', 'transaction'),
+	events: Model.hasMany('events', 'event'),
+	documents: Model.hasMany('dispute_documents', 'dispute-document'),
+
+	serverStatus: Ember.computed.reads("__json.status"),
+	status: function() {
+		var serverStatus = this.get("serverStatus");
+
+		if (serverStatus !== 'pending') {
+			return serverStatus;
+		} else if (this.get('isEvidenceProvided') || this.get('hasExpired')) {
+			return 'under_review';
 		} else {
-			return true;
+			return 'needs_attention';
 		}
-	}.property('documents.length', 'documents.isLoaded'),
+	}.property('serverStatus', 'isEvidenceProvided', 'hasExpired'),
+
+	note: null,
+	tracking_number: null,
+	validations: {
+		note: {
+			presence: true
+		}
+	},
+	justitia_dispute: function() {
+		var JustitiaDispute = BalancedApp.__container__.lookupFactory("model:justitia-dispute");
+		return JustitiaDispute.find(this.get('dispute_uri'));
+	}.property('dispute_uri'),
+
+	isEvidenceProvided: function() {
+		return !!this.get('justitia_dispute.created_at');
+	}.property('justitia_dispute.created_at'),
 
 	type_name: 'Dispute',
 	route_name: 'dispute',
 
 	uri: '/disputes',
-	events_uri: Balanced.computed.concat('uri', '/events'),
+	events_uri: Computed.concat('uri', '/events'),
 
 	dispute_uri: function() {
 		return '/disputes/' + this.get('id');
@@ -38,20 +63,27 @@ Balanced.Dispute = Balanced.Model.extend(Ember.Validations, {
 
 	last_four: Ember.computed.alias('transaction.last_four'),
 	bank_name: Ember.computed.alias('transaction.bank_name'),
+	last_four_with_name: Computed.fmt('last_four', 'funding_instrument_name', '%@ %@'),
 	funding_instrument_description: Ember.computed.oneWay('transaction.funding_instrument_description').readOnly(),
 	funding_instrument_name: Ember.computed.alias('transaction.funding_instrument_name'),
 	funding_instrument_type: Ember.computed.alias('transaction.funding_instrument_type'),
-	page_title: Balanced.computed.orProperties('transaction.description', 'transaction.id'),
+	page_title: Computed.orProperties('transaction.description', 'transaction.id'),
 
-	status_name: Ember.computed.alias('status'),
+	getTransactionsLoader: function(attributes) {
+		var DisputeTransactionsResultsLoader = require("balanced-dashboard/models/results-loaders/dispute-transactions")["default"];
+		attributes = _.extend({
+			dispute: this
+		}, attributes);
+		return DisputeTransactionsResultsLoader.create(attributes);
+	},
 
-	hasNotExpired: function() {
-		return moment(this.get('respond_by')).toDate() > moment().toDate();
+	hasExpired: function() {
+		return moment(this.get('respond_by')).toDate() < moment().toDate();
 	}.property('respond_by'),
 
 	canUploadDocuments: function() {
-		return this.get('isDocumentsLoaded') && this.get('hasNotExpired') && (this.get('status') === 'pending') && (this.get('documents.length') === 0);
-	}.property('isDocumentsLoaded', 'hasNotExpired', 'status', 'documents.length')
+		return !this.get('isEvidenceProvided') && !this.get('hasExpired') && (this.get('status') === 'needs_attention');
+	}.property('isEvidenceProvided', 'hasExpired', 'status')
 });
 
-Balanced.TypeMappings.addTypeMapping('dispute', 'Balanced.Dispute');
+export default Dispute;

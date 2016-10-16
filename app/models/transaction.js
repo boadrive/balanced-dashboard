@@ -1,12 +1,15 @@
-var Computed = {
-	isStatus: function(status) {
-		return Ember.computed.equal('status', status);
-	}
+import Computed from "../utils/computed";
+import Model from "./core/model";
+
+var isStatus = function(status) {
+	return Ember.computed.equal('status', status);
 };
 
-Balanced.Transaction = Balanced.Model.extend({
-	customer: Balanced.Model.belongsTo('customer', 'Balanced.Customer'),
-	events: Balanced.Model.hasMany('events', 'Balanced.Event'),
+var Transaction = Model.extend(Ember.Validations, {
+	customer: Model.belongsTo('customer', 'customer'),
+	events: Model.hasMany('events', 'event'),
+
+	isUnlinked: Ember.computed.not("links.order"),
 
 	amount_dollars: function() {
 		if (this.get('amount')) {
@@ -20,8 +23,8 @@ Balanced.Transaction = Balanced.Model.extend({
 	customer_display_me: Ember.computed.oneWay('customer.display_me'),
 	customer_email: Ember.computed.oneWay('customer.email'),
 
-	page_title: Balanced.computed.orProperties('description', 'id'),
-	events_uri: Balanced.computed.concat('uri', '/events'),
+	page_title: Computed.orProperties('description', 'id'),
+	events_uri: Computed.concat('uri', '/events'),
 
 	dasherized_funding_instrument_type: function() {
 		if (this.get('funding_instrument_type')) {
@@ -38,16 +41,16 @@ Balanced.Transaction = Balanced.Model.extend({
 			}
 			return 'The transaction failed, no failure reason was given.';
 		} else {
-			return Ember.String.capitalize(this.get('status'));
+			return undefined;
 		}
 	}.property('is_failed', 'status', 'failure_reason', 'failure_reason_code'),
 
-	is_failed: Computed.isStatus('failed'),
-	is_pending: Computed.isStatus('pending'),
-	is_succeeded: Computed.isStatus('succeeded')
+	is_failed: isStatus('failed'),
+	is_pending: isStatus('pending'),
+	is_succeeded: isStatus('succeeded')
 });
 
-Balanced.Transaction.reopenClass({
+Transaction.reopenClass({
 	findAppearsOnStatementAsInvalidCharacters: function(originalString) {
 		// ASCII letters (a-z and A-Z)
 		// Digits (0-9)
@@ -60,3 +63,5 @@ Balanced.Transaction.reopenClass({
 			.join("");
 	}
 });
+
+export default Transaction;

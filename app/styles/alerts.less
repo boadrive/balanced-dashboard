@@ -1,0 +1,130 @@
+.alert-row {
+  width: 100%;
+}
+
+.modal {
+  .notification-center {
+    text-align: left;
+  }
+}
+
+.notification-center {
+  .sl;
+  margin: 0;
+  padding: 10px 45px;
+  border-radius: 0;
+  text-shadow: none;
+  border: 0;
+  color: @black;
+  background-color: @curryYellow20;
+  border-bottom: 1px solid @white;
+  text-align: center;
+  line-height: 20px;
+
+  .notification-center-message {
+    padding-left: 30px;
+
+    .message {
+      position: relative;
+
+      &:before {
+        font-family: 'Balanced-Icon';
+        font-size: 20px;
+        position: absolute;
+        margin-left: -30px;
+      }
+    }
+  }
+
+  &.secondary {
+    .sl-sb;
+    text-align: left;
+    margin-bottom: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  &.error {
+    .sl;
+    color: @imperialRed100;
+    background-color: @imperialRed10;
+
+    .message:before {
+      &:extend(.icon-alert:before);
+      color: @imperialRed100;
+    }
+  }
+
+  &.success {
+    .sl;
+    color: @gray8;
+    background-color: @pineGreen20;
+
+    .message:before {
+      &:extend(.icon-checkmark:before);
+      color: @pineGreen100;
+    }
+  }
+
+  &.warning {
+    color: @gray8;
+    background-color: @curryYellow20;
+
+    .message:before {
+      &:extend(.icon-alert:before);
+      color: @curryYellow80;
+    }
+  }
+
+  &.unlinked {
+    background-color: @curryYellow20;
+
+    .notification-center-message {
+      padding-left: 20px;
+    }
+
+    .message:before {
+      font-size: 14px;
+      line-height: 20px;
+      margin-left: -20px;
+      &:extend(.icon-unlinked:before);
+      color: @imperialRed100;
+    }
+  }
+
+  &.info {
+    color: @gray8;
+    background-color: @persianBlue10;
+
+    .message:before {
+      &:extend(.icon-notification:before);
+      color: @persianBlue80;
+    }
+  }
+
+  button {
+    margin: 0;
+    padding: 0;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background-color: transparent;
+    color: @black;
+    letter-spacing: 0;
+  }
+
+  .close {
+    float: right;
+    position: relative;
+    margin: 0 10px 0 0;
+    background-color: @gray7;
+    color: @white;
+    &:hover {
+      color: @white;
+      background-color: @black;
+    }
+    &:after {
+      display: none;
+    }
+  }
+}

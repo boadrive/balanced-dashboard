@@ -1,0 +1,348 @@
+.page-with-logo {
+  padding-bottom: 45px;
+
+  .logo {
+    display: block;
+    width: 150px;
+    margin: 50px auto 60px;
+  }
+
+  #forgot-form,
+  #reset-password-form {
+    p.instructions {
+      color: @textColor;
+      font-size: 13px;
+      line-height: 15px;
+      width: 55%;
+    }
+  }
+}
+
+.after-form-link {
+  text-align: center;
+}
+
+.page-summary-with-icon {
+  width: 435px;
+  margin: 45px auto 20px;
+  text-align: center;
+
+  i {
+    font-size: 86px;
+    color: @gray2;
+  }
+
+  h2 {
+    .sl-20-lt;
+  }
+}
+
+.page-form {
+  background-color: @gray0;
+  border: 1px solid @gray2;
+  margin: 45px auto 20px;
+  float: none;
+  width: 435px;
+
+  &.white {
+    background-color: @white;
+  }
+
+  h3 {
+    .sl-sb;
+    line-height: 60px;
+    margin: 0;
+    text-align: center;
+    border-bottom: 1px solid @gray2;
+  }
+
+  .page-form-body {
+    padding: 45px;
+
+    > p {
+      text-align: center;
+    }
+
+    dl {
+      dt, dd {
+        .sl-note;
+        float: left;
+        line-height: 20px;
+        margin-bottom: 20px;
+      }
+
+      dt {
+        width: 40%;
+      }
+
+      dd {
+        width: 60%;
+        color: @black;
+
+        .keyboard {
+          .sl-sb;
+          color: @white;
+          background-color: @black;
+          padding: 3px 5px;
+          display: inline;
+          .border-radius(3px);
+        }
+      }
+    }
+    form {
+      p {
+        padding-bottom: 30px;
+      }
+
+      // override bootstrap invalid style
+      input[type="email"]:focus:invalid {
+        color: @black;
+        border-color: rgba(82,168,236,.8);
+      }
+    }
+  }
+}
+
+.full-page-form {
+  fieldset {
+    margin-top: 60px;
+    position: relative;
+  }
+  legend {
+    .sl;
+    margin-bottom: 0;
+
+    &+.control-group {
+      margin-top: 0;
+    }
+  }
+  .control-group {
+    .clearfix();
+
+    background-color: @white;
+    border-bottom: 1px solid @gray2;
+    padding: 25px 50px;
+    margin: 0;
+    &:last-child {
+      border-bottom: 0;
+    }
+    &.error {
+      label, .control-label {
+        color: @imperialRed100;
+      }
+      input {
+        border-color: @imperialRed100;
+        background: @imperialRed20;
+      }
+      ::-webkit-input-placeholder {
+          color: @imperialRed100;
+      }
+      :-moz-placeholder {
+          color: @imperialRed100;
+      }
+      ::-moz-placeholder {
+          color: @imperialRed100;
+      }
+      :-ms-input-placeholder {
+          color: @imperialRed100;
+      }
+    }
+
+    > .controls {
+      width: 410px;
+      display: inline-block;
+      float: left;
+    }
+  }
+  .section-banner-header {
+    background-color: @egyptianBlue20;
+    border-bottom: 1px solid @gray3;
+    margin: 0;
+    p {
+      margin: 0;
+      padding: 17px 35px;
+      color: @black;
+      strong {
+        font-size: 16px;
+      }
+    }
+
+    &.instructions-banner {
+      background-color: @white;
+      p {
+        padding-top: 25px;
+        padding-bottom: 25px;
+      }
+    }
+
+    .disclosure-button {
+      background-color: @egyptianBlue60 !important;
+      float: left;
+      }
+  }
+  .btn {
+    &.primary {
+      float: right;
+      margin-left: 5px;
+    }
+  }
+
+  input[type="text"], input[type="email"] {
+    width: 300px;
+    margin: 0;
+
+    &.span2 {
+      width: 61px;
+    }
+
+    &.span3 {
+      width: 100px;
+    }
+  }
+  label {
+    display: inline-block;
+    float: left;
+    width: 430px;
+    padding-top: 10px;
+    &:after {
+      content: '';
+    }
+  }
+  strong {
+    font-size: 15px;
+    color: @black;
+  }
+  ol {
+    margin: 1em 0 0 1em;
+    li {
+      list-style: decimal;
+      margin-bottom: 0.5em;
+    }
+  }
+  .actions {
+    text-align: right;
+    padding: 15px;
+    min-height: 23px;
+    .loader {
+      float: left;
+    }
+    &.error {
+      background-color: @imperialRed20;
+    }
+    .error-message {
+      float: left;
+      padding: 5px 5px 0 0;
+    }
+    .icon.warning {
+      display: block;
+      border-radius: 90px;
+      float: left;
+      background: @iconsFile -65px -586px no-repeat;
+      background-color: @imperialRed100;
+      width: 20px;
+      height: 20px;
+    }
+    .message {
+      .sl-md-b;
+      position: relative;
+      left: 9px;
+      top: 3px;
+      float: left;
+    }
+  }
+
+  .application-type {
+    .sl;
+    font-style: italic;
+
+    .control-group {
+      text-align: center;
+      font-size: 17px;
+    }
+    a {
+      width: 212px;
+      height: 112px;
+      border: 5px solid transparent;
+      display: inline-block;
+      background-color: @gray2;
+      color: @gray4;
+      span {
+        width: 60px;
+        height: 60px;
+        margin: 12px auto 5px;
+        display: block;
+        background: @iconsFile 0 -770px;
+      }
+      &.business {
+        span {
+          background-position: -60px -770px;
+        }
+      }
+      &.selected, &:hover {
+        border-color: @black;
+        color: @black;
+        cursor: pointer;
+        span {
+          background-position: -120px -770px;
+        }
+        &.business {
+          span {
+            background-position: -180px -770px;
+          }
+        }
+      }
+      &.selected {
+        background-color: @turquoise20;
+      }
+    }
+    .or {
+      display: inline-block;
+      width: 170px;
+      margin: 0 40px;
+      position: relative;
+      top: -35px;
+      hr {
+        width: 60px;
+        float: right;
+        border-top-color: @gray3;
+        &:first-child {
+          float: left;
+        }
+      }
+      span {
+        display: inline-block;
+        width: 50px;
+        text-align: center;
+        position: relative;
+        top: 11px;
+        color: @black;
+      }
+    }
+  }
+
+  .control-group.error label[for=terms-and-conditions] strong {
+    color: @imperialRed100;
+  }
+  label[for=terms-and-conditions] {
+    width: 100%;
+    input {
+      margin-top: 0;
+    }
+    strong {
+      vertical-align: text-top;
+    }
+    &+.nested {
+      margin-left: 1em;
+      padding-top: 3em;
+      width: 400px;
+    }
+    &:after {
+      display: none;
+    }
+  }
+}
+
+a.forgot-password {
+  position: absolute;
+  margin-top: -18px;
+}

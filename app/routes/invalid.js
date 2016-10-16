@@ -1,14 +1,21 @@
-Balanced.InvalidRoute = Balanced.AuthRoute.extend({
+import AnalyticsLogger from "balanced-dashboard/utils/analytics_logger";
+import AuthRoute from "./auth";
+
+var InvalidRoute = AuthRoute.extend({
 	redirect: function() {
 		Ember.Logger.warn("Invalid route specified: " + window.location.pathname + window.location.hash);
-		Balanced.Analytics.trackEvent('route-error', {
+		AnalyticsLogger.trackEvent('route-error', {
 			type: 'invalid-route',
 			location: window.location.toString()
 		});
-		this.controllerFor('application').alert({
-			message: "Invalid URL specified, please check the URL.",
-			type: 'error'
+
+		var controller = this.controllerFor('notification_center');
+		controller.clearNamedAlert('InvalidUrl');
+
+		controller.alertError("Invalid URL specified, please check the URL.", {
+			name: 'InvalidUrl'
 		});
+
 		this.transitionTo('marketplaces');
 	},
 
@@ -16,3 +23,5 @@ Balanced.InvalidRoute = Balanced.AuthRoute.extend({
 		return null;
 	}
 });
+
+export default InvalidRoute;

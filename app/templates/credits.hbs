@@ -1,26 +1,32 @@
-<h1 class="page-title">Credit</h1>
+{{#view "page-navigations/transaction-page-navigation" model=model}}
+	<div class="buttons page-actions">
+		{{#if model.can_reverse}}
+			<a class="btn" {{action "openModal" "modals/reverse-credit-modal" model}}>Reverse</a>
+		{{/if}}
+	</div>
+{{/view}}
 
-<div id="credit" class="transaction">
-	<div class="main-header transactions-header">
-		<div class="row">
-			<div class="span2 label">
-				<div class="icon">Credit</div>
-			</div>
-			<div class="span title">
-				<span class="nav3d">
-					{{page_title}}
-				</span>
-			</div>
+{{#view "detail-views/body-panel"}}
+	{{#view "detail-views/api-model-panel" model=model}}
+		{{view "detail-views/summary-sections/credit-summary-section" model=model}}
+		{{view "detail-views/description-lists/transaction-titled-key-values-section" model=model}}
+		{{view "meta-list" type=model}}
+	{{/view}}
+
+	{{#view "detail-views/main-panel"}}
+		<h3>Associated transactions</h3>
+		<div class="results">
+			{{view "results/associated-transactions-table" transaction=model}}
 		</div>
-	</div>
 
-	{{txn-customer customer=customer}}
+		<h3>Logs</h3>
+		<div class="results">
+			{{view "resource-logs" content=model}}
+		</div>
 
-	<div class="transaction-details">
-		{{#each reversal in reversalsLoader.results}}
-			{{txn-reversal reversal=reversal}}
-		{{/each}}
-
-		{{txn-credit credit=model}}
-	</div>
-</div>
+		<h3>Events</h3>
+		<div class="results">
+			{{view "resource-events" content=model}}
+		</div>
+	{{/view}}
+{{/view}}

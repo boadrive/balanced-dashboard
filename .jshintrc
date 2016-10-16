@@ -11,15 +11,15 @@
 	"undef": true,
 	"boss": true,
 	"eqnull": true,
+	"esnext": true,
 	"browser": true,
 	"jquery": true,
 	"camelcase": false,
-	"globals": {
+	"predef": {
+		"BalancedApp": true,
 		"module": true,
 		"require": true,
 		"Ember": true,
-		"Auth": true,
-		"Balanced": true,
 		"balanced": true,
 		"moment": true,
 		"DS": true,

@@ -1,0 +1,8 @@
+<div {{bind-attr class=":control-group"}}>
+	{{#if view.isSubmitting}}
+		<span class="loader loading"></span>
+	{{else}}
+		<button class="btn" {{action "add" target="view"}}>Add</button>
+	{{/if}}
+	{{view "form-fields/text-field" valueBinding="view.secret" name="secret" placeholder="Enter API key of existing marketplace"}}
+</div>

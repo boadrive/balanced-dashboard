@@ -1,0 +1,111 @@
+@searchBoxBackground: @gray5;
+@searchBoxMargin: 5px;
+@searchBoxHeight: 70px;
+@headerHeight: 70px;
+
+@searchActiveBackground: @gray6;
+@searchBorderWidth: 5px;
+@searchBorder: @searchBorderWidth solid @black;
+@searchIconWidth: 50px;
+@searchPostLabelWidth: 50px;
+
+#marketplaces-and-search {
+  position: relative;
+}
+
+#search {
+  display: block;
+  height: 100%;
+  text-align: left;
+}
+
+.search-field-container {
+    background-color: @white;
+    border-bottom: 1px solid @gray2;
+  height: @searchBoxHeight;
+  margin: 0;
+  padding: 0 @searchPostLabelWidth 0 @searchIconWidth;
+  position: relative;
+  z-index: 2;
+
+  .icon-search {
+    .sl-24;
+    color: @gray4;
+    display: inline-block;
+    height: @searchBoxHeight;
+    left: 13px;
+    margin-top: 21px;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: @searchIconWidth;
+
+    &.search-highlight {
+      color: @black;
+    }
+  }
+}
+
+#q, .q {
+  .sl-lg;
+  color: @gray2;
+  display: inline-block;
+  background-color: transparent;
+  line-height: 1.5em;
+  border-radius: 0px;
+  width: 100%;
+  margin: 0;
+  padding-left: 20px;
+  border: 0;
+  box-shadow: none;
+  height: @searchBoxHeight;
+
+  &:focus {
+    color: @black;
+
+    .icon-search {
+      color: @black;
+    }
+  }
+}
+
+.q {
+  width: calc(~"100% - 424px");
+  text-overflow: ellipsis;
+
+  &:hover {
+    cursor: text;
+  }
+}
+
+.search-nav {
+  &:extend(#marketplace-nav);
+  top: 0;
+  background-color: @gray0;
+  border-right: solid 1px @gray2;
+
+  & > ul {
+    margin-top: 100px;
+
+    & > li {
+      &.selected {
+        background-color: @gray1;
+
+        a {
+          color: @gray7;
+        }
+      }
+
+      a {
+        .sl-sb;
+        color: @gray4;
+        display: block;
+        padding: 10px 10px 10px 20px;
+
+        &:hover {
+          &:extend(.search-nav > ul > li.selected);
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,6 @@
+import Ember from "ember";
+import Constants from "balanced-dashboard/utils/constants";
+
 var FORMAT_NUMBER_REGEX = /\B(?=(\d{3})+(?!\d))/g,
 	PRETTY_LOG_URL_REGEX = /\/marketplaces\/[^\/]*\/(.+)$/,
 	STRIP_DOMAIN_REGEX = /^.*\/\/[^\/]+/,
@@ -15,7 +18,7 @@ var FORMAT_NUMBER_REGEX = /\B(?=(\d{3})+(?!\d))/g,
 	HIDE_CC_NUMBER_REGEX = /([0-9]*)([0-9]{4})/g;
 
 
-Balanced.Utils = Ember.Namespace.create({
+var Utils = Ember.Namespace.create({
 
 	toDataUri: function(string) {
 		return "data:text/plain;charset=utf-8;base64," + window.btoa(string);
@@ -38,12 +41,21 @@ Balanced.Utils = Ember.Namespace.create({
 		return results;
 	},
 
+	objectToQueryString: function(object) {
+		return _.map(object, function(v, k) {
+			var value = Ember.isBlank(v) ?
+				"" :
+				v;
+			return encodeURIComponent(k) + '=' + encodeURIComponent(value);
+		}).join('&');
+	},
+
 	stripDomain: function(url) {
 		return url.replace(STRIP_DOMAIN_REGEX, '');
 	},
 
 	prettyLogUrl: function(url) {
-		return Balanced.Utils.stripDomain(url).replace(PRETTY_LOG_URL_REGEX, '/.../$1').split("?")[0];
+		return Utils.stripDomain(url).replace(PRETTY_LOG_URL_REGEX, '/.../$1').split("?")[0];
 	},
 
 	prettyPrint: function(obj) {
@@ -142,7 +154,7 @@ Balanced.Utils = Ember.Namespace.create({
 			prepend = '-$';
 		}
 
-		return prepend + Balanced.Utils.centsToDollars(cents);
+		return prepend + Utils.centsToDollars(cents);
 	},
 
 	formatNumber: function(number) {
@@ -177,7 +189,7 @@ Balanced.Utils = Ember.Namespace.create({
 			return str;
 		}
 
-		return str.charAt(0).toUpperCase() + str.slice(1);
+		return str.charAt(0).toUpperCase() + str.slice(1).replace(UNDERSCORE_REPLACE_REGEX, ' ');
 	},
 
 	dollarsToCents: function(dollars) {
@@ -198,7 +210,7 @@ Balanced.Utils = Ember.Namespace.create({
 
 	centsToDollars: function(cents) {
 		if (!cents) {
-			return '';
+			return '0';
 		}
 
 		return (cents / 100).toFixed(2).replace(FORMAT_CURRENCY_REGEX, '$1,');
@@ -209,16 +221,18 @@ Balanced.Utils = Ember.Namespace.create({
 	},
 
 	setCurrentMarketplace: function(marketplace) {
+		var Auth = require("balanced-dashboard/auth")["default"];
+
 		// Store the marketplace in a global so we can use it for auth.
 		// TODO: TAKE THIS OUT when we've moved to oAuth
-		Ember.set(Balanced, 'currentMarketplace', marketplace);
-		Balanced.Auth.set('currentMarketplace', marketplace);
+		Ember.set(BalancedApp, 'currentMarketplace', marketplace);
+		Auth.set('currentMarketplace', marketplace);
 		if (marketplace) {
-			Balanced.Auth.rememberLastUsedMarketplaceUri(marketplace.get('uri'));
+			Auth.rememberLastUsedMarketplaceUri(marketplace.get('uri'));
 
-			var userMarketplace = Balanced.Auth.get('user').user_marketplace_for_id(marketplace.get('id'));
+			var userMarketplace = Auth.get('user').user_marketplace_for_id(marketplace.get('id'));
 			if (userMarketplace) {
-				Balanced.Auth.setAPIKey(userMarketplace.get('secret'));
+				Auth.setAPIKey(userMarketplace.get('secret'));
 			} else {
 				Ember.Logger.warn("Couldn't find API key for %@".fmt(marketplace.get('uri')));
 			}
@@ -250,13 +264,13 @@ Balanced.Utils = Ember.Namespace.create({
 		if (params.type) {
 			switch (params.type) {
 				case 'search':
-					filteringParams['type[in]'] = Balanced.SEARCH.SEARCH_TYPES.join(',');
+					filteringParams['type[in]'] = Constants.SEARCH.SEARCH_TYPES.join(',');
 					break;
 				case 'transaction':
-					filteringParams['type[in]'] = Balanced.SEARCH.TRANSACTION_TYPES.join(',');
+					filteringParams['type[in]'] = Constants.SEARCH.TRANSACTION_TYPES.join(',');
 					break;
 				case 'funding_instrument':
-					filteringParams['type[in]'] = Balanced.SEARCH.FUNDING_INSTRUMENT_TYPES.join(',');
+					filteringParams['type[in]'] = Constants.SEARCH.FUNDING_INSTRUMENT_TYPES.join(',');
 					break;
 				default:
 					filteringParams.type = params.type;
@@ -268,17 +282,17 @@ Balanced.Utils = Ember.Namespace.create({
 		}
 
 		filteringParams = _.extend(filteringParams, _.omit(params, transformedParams));
-		filteringParams = Balanced.Utils.sortDict(filteringParams);
+		filteringParams = Utils.sortDict(filteringParams);
 		return this.buildUri(uri, filteringParams);
 	},
 
 	buildUri: function(path, queryStringObject) {
-		var queryString = _.map(queryStringObject, function(v, k) {
-			return encodeURIComponent(k) + '=' + encodeURIComponent(v);
-		}).join('&');
-		return queryString ?
-			path + "?" + queryString :
-			path;
+		var queryString = _.isString(queryStringObject) ?
+			queryStringObject :
+			this.objectToQueryString(queryStringObject);
+		return Ember.isBlank(queryString) ?
+			path :
+			path + "?" + queryString;
 	},
 
 	/*
@@ -321,42 +335,44 @@ Balanced.Utils = Ember.Namespace.create({
 	},
 
 	date_formats: {
-		date: '%b %e, %Y',
-		time: '%l:%M %p',
-		short: '%m/%e/%y, %l:%M %p',
-		long: '%B %e %Y, %l:%M %p',
+		date: 'MMM D, YYYY',
+		time: 'h:mm A',
+		date_time: 'MMM D, YYYY, h:mm A',
+		short: 'M/D/YYYY, h:mm A',
+		long: 'MMMM D YYYY, h:mm A',
+	},
+
+	formatDate: function(date, format) {
+		if (_.isDate(date)) {
+			return moment(date).format(format);
+		} else if (_.isString(date)) {
+			// As of Sept 22 2014 there is an issue with log api results returning the time zone as
+			// "+00:00Z" which is not being parsed as valid ISO_8601
+			// https://github.com/balanced/balanced/issues/644
+			return moment(date.replace(/\+00:00Z$/, "Z"), moment.ISO_8601).format(format);
+		} else {
+			return date;
+		}
+	},
+
+	humanReadableDateTime: function(isoDate) {
+		return Utils.formatDate(isoDate, Utils.date_formats.date_time);
 	},
 
 	humanReadableDate: function(isoDate) {
-		if (isoDate) {
-			return Date.parseISO8601(isoDate).strftime(Balanced.Utils.date_formats.date);
-		} else {
-			return isoDate;
-		}
+		return Utils.formatDate(isoDate, Utils.date_formats.date);
 	},
 
 	humanReadableTime: function(isoDate) {
-		if (isoDate) {
-			return Date.parseISO8601(isoDate).strftime(Balanced.Utils.date_formats.time);
-		} else {
-			return isoDate;
-		}
+		return Utils.formatDate(isoDate, Utils.date_formats.time);
 	},
 
 	humanReadableDateShort: function(isoDate) {
-		if (isoDate) {
-			return Date.parseISO8601(isoDate).strftime(Balanced.Utils.date_formats.short);
-		} else {
-			return isoDate;
-		}
+		return Utils.formatDate(isoDate, Utils.date_formats.short);
 	},
 
 	humanReadableDateLong: function(isoDate) {
-		if (isoDate) {
-			return Date.parseISO8601(isoDate).strftime(Balanced.Utils.date_formats.long);
-		} else {
-			return isoDate;
-		}
+		return Utils.formatDate(isoDate, Utils.date_formats.long);
 	},
 
 	// filters any number that is in the form of a string and longer than 4 digits (bank codes, ccard numbers etc)
@@ -378,7 +394,7 @@ Balanced.Utils = Ember.Namespace.create({
 		var ret = {};
 		for (var name in obj) {
 			if (obj.hasOwnProperty(name)) {
-				ret[name] = Balanced.Utils.filterSensitiveData(obj[name]);
+				ret[name] = Utils.filterSensitiveData(obj[name]);
 			}
 		}
 		return ret;
@@ -405,7 +421,7 @@ Balanced.Utils = Ember.Namespace.create({
 			fn.call(this, val, addlKey + key);
 
 			if (_.isObject(val)) {
-				Balanced.Utils.traverse(val, fn, ctx, key + '.');
+				Utils.traverse(val, fn, ctx, key + '.');
 			}
 		}, ctx);
 	},
@@ -418,9 +434,9 @@ Balanced.Utils = Ember.Namespace.create({
 	},
 
 	formatBankName: function(bankName) {
-		var formattedBankName = Balanced.Utils.toTitleCase(bankName);
+		var formattedBankName = Utils.toTitleCase(bankName);
 
-		_.each(Balanced.BANK_NAMES, function(unformattedArr, formattedStr) {
+		_.each(Constants.BANK_NAMES, function(unformattedArr, formattedStr) {
 			_.each(unformattedArr, function(unformattedStr) {
 				formattedBankName = formattedBankName.replace(unformattedStr, formattedStr);
 			});
@@ -431,7 +447,7 @@ Balanced.Utils = Ember.Namespace.create({
 
 	formatStatusCode: function(statusCode) {
 		if (statusCode) {
-			return Balanced.Utils.capitalize(statusCode.replace(/-/g, ' '));
+			return Utils.capitalize(statusCode.replace(/-/g, ' '));
 		} else {
 			return null;
 		}
@@ -452,5 +468,11 @@ Balanced.Utils = Ember.Namespace.create({
 			bytes = '0 byte';
 		}
 		return bytes;
+	},
+
+	getCurrentYear: function() {
+		return moment().get("year");
 	}
 });
+
+export default Utils;

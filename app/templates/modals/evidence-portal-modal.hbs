@@ -1,0 +1,52 @@
+{{#view "form-fields/form-section" model=view.model sectionTitle="File upload" sectionDescription=view.fileUploadText}}
+	<div class="form-group">
+		{{view "form-fields/file-drop-field"}}
+	</div>
+	<div class="clearfix form-group">
+		<label class="control-label clearfix">Documents</label>
+		<table class="items">
+			<thead>
+				<tr>
+					<th class="col-md-7"><span>File (PDF or JPEG)</span></th>
+					<th class="col-md-4"><span>Size (Max: 1 MB)</span></th>
+					<th class="col-icon"><span>&nbsp;</span></th>
+				</tr>
+			</thead>
+			<tbody>
+				{{#each doc in view.parentView.documentsToUpload}}
+					<tr {{bind-attr class=":table-row doc.isError:error"}}>
+						<td class="name">
+							<span {{bind-attr class="doc.isError:error"}}>
+								{{doc.file_name}}
+							</span>
+						</td>
+						<td class="size"><span>{{format-file-size doc.file_size}}</span></td>
+						<td>
+							{{#if doc.isUploading}}
+								<div class="loader-container">
+									<span class="loader loading"></span>
+								</div>
+							{{else}}
+								<a href="#" {{action "remove" doc target="view.parentView"}}>
+									<i class="icon-table-x"></i>
+								</a>
+							{{/if}}
+						</td>
+					</tr>
+				{{else}}
+					<tr>
+						<td colspan="3" class="no-results">None</td>
+					</tr>
+				{{/each}}
+			</tbody>
+		</table>
+	</div>
+{{/view}}
+
+{{#view "form-fields/form-section" model=view.model sectionTitle="Tracking information" sectionDescription=view.trackingCodeText}}
+	{{view "form-fields/text-form-field" model=view.model inputClassNames="full" inputName="tracking_number" field="tracking_number" labelText="Tracking number" explanationText="FedEx, UPS or USPS tracking number only"}}
+{{/view}}
+
+{{#view "form-fields/form-section" model=view.model sectionTitle="Evidence description" sectionDescription=view.noteText}}
+	{{view "form-fields/textarea-form-field" model=view.model inputClassNames="full" inputName="note" field="note" labelText="Note" maxlength=434}}
+{{/view}}

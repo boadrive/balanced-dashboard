@@ -1,0 +1,27 @@
+{{#view "form-fields/form-section" model=view.model bankAccount=view.bankAccount sectionTitle=view.sectionTitle sectionDescription="Enter the two micro-deposit amounts from Balanced."}}
+	{{view "form-fields/static-text-form-field"
+		model=view.bankAccount
+		labelText="Bank account"
+		field="formatted_bank_name"
+		emptyText="unknown"
+	}}
+
+	{{view "form-fields/cents-form-field"
+		model=view.model
+		labelText="First amount"
+		field="amount_1"
+		name="amount_1"
+	}}
+
+	{{view "form-fields/cents-form-field"
+		model=view.model
+		labelText="Second amount"
+		field="amount_2"
+		name="amount_2"
+	}}
+{{/view}}
+{{#view "form-fields/form-section" sectionTitle="Note"}}
+	<div class="form-group">
+		<p>If the deposits are not received after five business days, the transactions may have failed because of incorrect bank account information. In this case, remove the erroneous bank account and add a new bank account.</p>
+	</div>
+{{/view}}

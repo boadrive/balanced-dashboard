@@ -1,28 +1,22 @@
-Balanced.ApplicationController = Ember.Controller.extend(Ember.Evented, {
-	showNotificationCenter: true,
+import Ember from "ember";
+import AnalyticsLogger from "balanced-dashboard/utils/analytics_logger";
 
-	alert: function(options) {
-		this.set('alertObj', options);
-	},
-
-	alertTransition: function() {
-		var alert = this.get('alertObj');
-		if (alert) {
-			if (alert.persists) {
-				alert.persists = false;
-			} else {
-				this.set('alertObj', null);
-			}
-		}
-	},
+var ApplicationController = Ember.Controller.extend(Ember.Evented, {
+	needs: ["notification_center", "marketplace"],
 
 	actions: {
-		closeNotificationCenter: function() {
-			this.set('showNotificationCenter', false);
+		signUp: function() {
+			AnalyticsLogger.trackEvent("SignUp: Opened 'Create an account' modal", {
+				path: this.get("container").lookup("controller:application").get('currentRouteName')
+			});
+			this.transitionToRoute('setup_guest_user');
 		},
 
-		toggleNotificationCenter: function() {
-			this.set('showNotificationCenter', !this.get('showNotificationCenter'));
+		register: function() {
+			AnalyticsLogger.trackEvent("SignUp: Opened 'Register for production access' modal", {
+				path: this.get("container").lookup("controller:application").get('currentRouteName')
+			});
+			this.transitionToRoute('marketplaces.apply');
 		},
 
 		openChangePasswordModal: function() {
@@ -34,12 +28,13 @@ Balanced.ApplicationController = Ember.Controller.extend(Ember.Evented, {
 		},
 
 		openVerifyBankAccountLink: function() {
-			var bankAccount = Balanced.currentMarketplace.get('owner_customer.bank_accounts.firstObject');
+			var bankAccountsController = this.get("container").lookup("controller:bank_accounts");
+			var bankAccount = this.get("controllers.marketplace.model.owner_customer.bank_accounts.firstObject");
 			this.transitionToRoute('bank_accounts', bankAccount).then(function(route) {
 				_.delay(function() {
 					var controller = route && route.routeName ?
 						route.get('controller') :
-						Balanced.__container__.lookup('controller:bank_accounts');
+						bankAccountsController;
 
 					if (!controller) {
 						return;
@@ -64,3 +59,5 @@ Balanced.ApplicationController = Ember.Controller.extend(Ember.Evented, {
 		}
 	}
 });
+
+export default ApplicationController;

@@ -1,47 +1,74 @@
-var Computed = {
-	uri: function(key) {
-		return Balanced.computed.concat('uri', '/' + key);
-	},
-	date: function(p) {
-		return function() {
-			var period = this.get('period');
-			if (!period) {
-				return this.get('created_at');
-			}
-			return period[p];
-		}.property('period');
-	}
+import Model from "./core/model";
+import Computed from "balanced-dashboard/utils/computed";
+
+var computedUri = function(key) {
+	return Computed.concat('uri', '/' + key);
+};
+var computedDate = function(p) {
+	return function() {
+		var period = this.get('period');
+		if (!period) {
+			return this.get('created_at');
+		}
+		return period[p];
+	}.property('period');
 };
 
-Balanced.Invoice = Balanced.Model.extend({
+var Invoice = Model.extend({
 	route_name: 'invoice',
 
-	page_title: Balanced.computed.fmt('sequence_number', '#%@'),
+	page_title: Computed.fmt('sequence_number', 'No. %@'),
+	type_name: 'Account statement',
 
-	source: Balanced.Model.belongsTo('source', 'Balanced.FundingInstrument'),
+	source: Model.belongsTo('source', 'funding-instrument'),
 
-	bank_account_debits: Balanced.Model.hasMany('bank_account_debits', 'Balanced.Debit'),
-	card_debits: Balanced.Model.hasMany('card_debits', 'Balanced.Debit'),
-	debits: Balanced.Model.hasMany('debits', 'Balanced.Debit'),
-	credits: Balanced.Model.hasMany('bank_account_credits', 'Balanced.Credit'),
-	holds: Balanced.Model.hasMany('holds', 'Balanced.Hold'),
-	failed_credits: Balanced.Model.hasMany('failed_credits', 'Balanced.Credit'),
-	lost_debit_chargebacks: Balanced.Model.hasMany('lost_debit_chargebacks', 'Balanced.Debit'),
-	refunds: Balanced.Model.hasMany('refunds', 'Balanced.Refund'),
-	reversals: Balanced.Model.hasMany('reversals', 'Balanced.Reversal'),
-	settlements: Balanced.Model.hasMany('settlements', 'Balanced.Settlement'),
-	disputes: Balanced.Model.hasMany('disputes', 'Balanced.Dispute'),
+	bank_account_debits: Model.hasMany('bank_account_debits', 'debit'),
+	card_debits: Model.hasMany('card_debits', 'debit'),
+	debits: Model.hasMany('debits', 'debit'),
+	credits: Model.hasMany('bank_account_credits', 'credit'),
+	holds: Model.hasMany('holds', 'hold'),
+	failed_credits: Model.hasMany('failed_credits', 'credit'),
+	lost_debit_chargebacks: Model.hasMany('lost_debit_chargebacks', 'debit'),
+	refunds: Model.hasMany('refunds', 'refund'),
+	reversals: Model.hasMany('reversals', 'reversal'),
+	settlements: Model.hasMany('settlements', 'settlement'),
+	disputes: Model.hasMany('disputes', 'dispute'),
 
-	from_date: Computed.date(0),
-	to_date: Computed.date(1),
+	from_date: computedDate(0),
+	to_date: computedDate(1),
+
+	typeChanged: function() {
+		if (this.get('type') === 'fee') {
+			this.set('type', 'transaction');
+		}
+	}.observes('type').on('init'),
 
 	invoice_type: function() {
-		if (this.get('disputes_total_fee') !== 0) {
+		if (this.get('isDispute')) {
 			return 'Disputes';
 		} else {
 			return 'Transactions';
 		}
-	}.property('disputes_total_fee'),
+	}.property('isDispute'),
+
+	getInvoicesLoader: function() {
+		var DisputesResultsLoader = require("balanced-dashboard/models/results-loaders/disputes")["default"];
+		return DisputesResultsLoader.create({
+			// Note: The Api is throwing an error when fetching the disputes using /invoices/:invoice_id/disputes
+			// so we are defaulting this to created_at for now.
+			// description: "Unable to sort on unknown field "initiated_at" Your request id is OHM4eadba4c092211e4b88e02b12035401b."
+			sort: "created_at,desc",
+			path: this.get("disputes_uri"),
+		});
+	},
+
+	getTransactionsLoader: function(attributes) {
+		var InvoiceTransactionsResultsLoader = require("balanced-dashboard/models/results-loaders/invoice-transactions")["default"];
+		attributes = _.extend({
+			invoice: this
+		}, attributes);
+		return InvoiceTransactionsResultsLoader.create(attributes);
+	},
 
 	isDispute: Ember.computed.equal('type', 'dispute'),
 
@@ -67,22 +94,22 @@ Balanced.Invoice = Balanced.Model.extend({
 	}.property('state', 'total_fee'),
 
 	is_not_paid: function() {
-		return this.get('state') !== 'pending';
-	}.property('state'),
+		return this.get('status') !== 'paid';
+	}.property('status'),
 
 	reversal_fee: 0,
 
 	// TODO - take all these URIs out once invoice has links for them
-	bank_account_debits_uri: Computed.uri('bank_account_debits'),
-	card_debits_uri: Computed.uri('card_debits'),
-	debits_uri: Computed.uri('debits'),
-	bank_account_credits_uri: Computed.uri('bank_account_credits'),
-	holds_uri: Computed.uri('holds'),
-	failed_credits_uri: Computed.uri('failed_credits'),
-	lost_debit_chargebacks_uri: Computed.uri('lost_debit_chargebacks'),
-	refunds_uri: Computed.uri('refunds'),
-	reversals_uri: Computed.uri('reversals'),
-	disputes_uri: Computed.uri('disputes')
+	bank_account_debits_uri: computedUri('bank_account_debits'),
+	card_debits_uri: computedUri('card_debits'),
+	debits_uri: computedUri('debits'),
+	bank_account_credits_uri: computedUri('bank_account_credits'),
+	holds_uri: computedUri('holds'),
+	failed_credits_uri: computedUri('failed_credits'),
+	lost_debit_chargebacks_uri: computedUri('lost_debit_chargebacks'),
+	refunds_uri: computedUri('refunds'),
+	reversals_uri: computedUri('reversals'),
+	disputes_uri: computedUri('disputes')
 });
 
-Balanced.TypeMappings.addTypeMapping('invoice', 'Balanced.Invoice');
+export default Invoice;

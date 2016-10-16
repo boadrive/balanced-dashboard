@@ -1,0 +1,7 @@
+<div class="modal-body clearfix">
+	{{#view "form-fields/form-section" model=view.model
+		sectionTitle="Explore my test marketplace"
+		sectionDescription="Explore the dashboard and interact with the Balanced API in test mode."}}
+		<a class="btn pull-right" {{action 'goToDashboard' target="view.parentView"}}>{{view.parentView.cancelButtonText}}</a>
+	{{/view}}
+</div>

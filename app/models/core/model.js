@@ -1,7 +1,11 @@
-require('app/models/core/mixins/load_promise');
-require('app/models/core/model_array');
-require('app/models/core/type_mappings');
-require('app/models/core/serializers/rev1');
+import Ember from "ember";
+import LoadPromise from "./mixins/load-promise";
+import TypeMappings from "./type-mappings";
+import Computed from "balanced-dashboard/utils/computed";
+import Rev1Serializer from "balanced-dashboard/serializers/rev1";
+import Utils from "balanced-dashboard/lib/utils";
+import ModelArray from "./model-array";
+import ValidationServerErrorHandler from "balanced-dashboard/utils/error-handlers/validation-server-error-handler";
 
 var JSON_PROPERTY_KEY = '__json';
 var URI_POSTFIX = '_uri';
@@ -15,7 +19,7 @@ var AJAX_ERROR_PARSERS = [{
 			error.description = error.description.replace(INTEGER_REGEX, function(m) {
 				try {
 					m = parseInt(m, 10);
-					return Balanced.Utils.formatCurrency(m);
+					return Utils.formatCurrency(m);
 				} catch (e) {}
 
 				return m;
@@ -26,7 +30,7 @@ var AJAX_ERROR_PARSERS = [{
 	}
 }];
 
-Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.LoadPromise, {
+var Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, LoadPromise, {
 
 	isLoaded: false,
 	isSaving: false,
@@ -40,7 +44,7 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 			(!this.get('validationErrors') || !_.keys(this.get('validationErrors')).length);
 	}.property('isValid', 'isError', 'validationErrors'),
 
-	id: Balanced.computed.orProperties('__json.id', '_id'),
+	id: Computed.orProperties('__json.id', '_id'),
 
 	// computes the ID from the URI - exists because at times Ember needs the
 	// ID of our model before it has finished loading. This gets overridden
@@ -55,8 +59,9 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 	}.property('uri'),
 
 	save: function(settings) {
-		settings = settings || {};
+		var Adapter = this.constructor.getAdapter();
 		var self = this;
+		settings = settings || {};
 		var data = this.constructor.serializer.serialize(this);
 
 		self.set('isSaving', true);
@@ -65,12 +70,12 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 
 		var resolveEvent = creatingNewModel ? 'didCreate' : 'didUpdate';
 		var uri = creatingNewModel ? this._createUri() : this.get('uri');
-		var adapterFunc = creatingNewModel ? Balanced.Adapter.create : Balanced.Adapter.update;
+		var adapterFunc = creatingNewModel ? Adapter.create : Adapter.update;
 
 		var promise = this.resolveOn(resolveEvent);
 
-		adapterFunc.call(Balanced.Adapter, this.constructor, uri, data, function(json) {
-			var deserializedJson = self.constructor.serializer.extractSingle(json, this.constructor, (creatingNewModel ? null : self.get('href')));
+		adapterFunc.call(Adapter, this.constructor, uri, data, function(json) {
+			var deserializedJson = self.constructor.serializer.extractSingle(json, self.constructor, (creatingNewModel ? null : self.get('href')));
 			self._updateFromJson(deserializedJson);
 
 			self.setProperties({
@@ -81,10 +86,55 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 			});
 
 			self.trigger(resolveEvent);
-			Balanced.Model.Events.trigger(resolveEvent, self);
+			Model.Events.trigger(resolveEvent, self);
 		}, $.proxy(self._handleError, self), settings);
 
 		return promise;
+	},
+
+	ingestErrorResponse: function(response) {
+		var errorHandler = new ValidationServerErrorHandler(this, response);
+		errorHandler.execute();
+	},
+
+	validateAndSave: function(settings) {
+		this.get("validationErrors").clear();
+		this.validate();
+		if (this.get("isValid")) {
+			var Adapter = this.constructor.getAdapter();
+			var self = this;
+			settings = settings || {};
+			var data = this.constructor.serializer.serialize(this);
+
+			self.set('isSaving', true);
+
+			var creatingNewModel = this.get('isNew');
+			var uri = creatingNewModel ? this._createUri() : this.get('uri');
+			var adapterFunc = creatingNewModel ? Adapter.create : Adapter.update;
+			var deferred = Ember.RSVP.defer();
+			var successHandler = function(json) {
+				var deserializedJson = self.constructor.serializer.extractSingle(json, self.constructor, (creatingNewModel ? null : self.get('href')));
+				self._updateFromJson(deserializedJson);
+				self.setProperties({
+					isNew: false,
+					isSaving: false,
+					isValid: true,
+					isError: false
+				});
+			};
+
+			adapterFunc.call(Adapter, this.constructor, uri, data, function(json) {
+				successHandler(json);
+				deferred.resolve(self);
+			}, function(response) {
+				self.ingestErrorResponse(response.responseJSON);
+				deferred.reject(self);
+			}, settings);
+			return deferred.promise;
+		}
+		else {
+			return Ember.RSVP.reject(this);
+		}
 	},
 
 	_createUri: function() {
@@ -100,15 +150,15 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 			isSaving: true
 		});
 
-		var promise = this.resolveOn('didDelete');
-
-		Balanced.Adapter.delete(this.constructor, this.get('uri'), function(json) {
-			self.set('isSaving', false);
-			self.trigger('didDelete');
-			Balanced.Model.Events.trigger('didDelete', self);
-		}, $.proxy(self._handleError, self), settings);
-
-		return promise;
+		this
+			.constructor
+			.getAdapter()
+			.delete(this.constructor, this.get('uri'), function(json) {
+				self.set('isSaving', false);
+				self.trigger('didDelete');
+				Model.Events.trigger('didDelete', self);
+			}, $.proxy(self._handleError, self), settings);
+		return this.resolveOn('didDelete');
 	},
 
 	reload: function() {
@@ -121,12 +171,15 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 
 		var promise = this.resolveOn('didLoad');
 
-		Balanced.Adapter.get(this.constructor, this.get('uri'), function(json) {
-			var deserializedJson = self.constructor.serializer.extractSingle(json, this.constructor, self.get('href'));
-			self._updateFromJson(deserializedJson);
-			self.set('isLoaded', true);
-			self.trigger('didLoad');
-		}, $.proxy(self._handleError, self));
+		this
+			.constructor
+			.getAdapter()
+			.get(this.constructor, this.get('uri'), function(json) {
+				var deserializedJson = self.constructor.serializer.extractSingle(json, self.constructor, self.get('href'));
+				self._updateFromJson(deserializedJson);
+				self.set('isLoaded', true);
+				self.trigger('didLoad');
+			}, $.proxy(self._handleError, self));
 
 		return promise;
 	},
@@ -227,7 +280,7 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 				});
 
 				this.setProperties({
-					validationErrors: Balanced.Utils.extractValidationErrorHash(res),
+					validationErrors: Utils.extractValidationErrorHash(res),
 					errorDescription: error.description,
 					requestId: error.request_id,
 					errorCategoryCode: error.category_code,
@@ -250,7 +303,7 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 
 		var metadataType = this.get(uriMetadataProperty + '.' + uriProperty + '._type');
 		if (metadataType) {
-			var mappedType = Balanced.TypeMappings.classForType(metadataType);
+			var mappedType = TypeMappings.classForType(metadataType);
 			if (mappedType) {
 				return mappedType;
 			} else {
@@ -267,8 +320,12 @@ Balanced.Model = Ember.Object.extend(Ember.Evented, Ember.Copyable, Balanced.Loa
 	}
 });
 
-Balanced.Model.reopenClass({
-	serializer: Balanced.Rev1Serializer.create(),
+Model.reopenClass({
+	getAdapter: function() {
+		return BalancedApp.__container__.lookup("adapter:main");
+	},
+
+	serializer: Rev1Serializer.create(),
 
 	find: function(uri, settings) {
 		var modelClass = this;
@@ -281,11 +338,32 @@ Balanced.Model.reopenClass({
 			isNew: false
 		});
 
-		Balanced.Adapter.get(modelClass, uri, function(json) {
-			modelObject.populateFromJsonResponse(json, uri);
-		}, $.proxy(modelObject._handleError, modelObject));
+		this
+			.getAdapter()
+			.get(modelClass, uri, function(json) {
+				modelObject.populateFromJsonResponse(json, uri);
+			}, $.proxy(modelObject._handleError, modelObject));
 
 		return modelObject;
+	},
+
+	fetch: function(uri, settings) {
+		var modelClass = this;
+		var deferred = Ember.RSVP.defer();
+		this
+			.getAdapter()
+			.get(modelClass, uri, function(json) {
+				var object = modelClass.create({
+					uri: uri,
+					isLoaded: false,
+					isNew: false
+				});
+				object.populateFromJsonResponse(json, uri);
+				deferred.resolve(object);
+			}, function(error) {
+				deferred.reject(error.responseJSON);
+			});
+		return deferred.promise;
 	},
 
 	findAll: function(settings) {
@@ -295,13 +373,13 @@ Balanced.Model.reopenClass({
 			throw new Error('Can\'t call findAll for class that doesn\'t have a default URI: %@'.fmt(this));
 		}
 
-		return Balanced.ModelArray.newArrayLoadedFromUri(uri, this);
+		return ModelArray.newArrayLoadedFromUri(uri, this);
 	},
 
 	constructUri: function(id) {
 		var uri = this.create().get('uri');
 		if (id) {
-			return Balanced.Utils.combineUri(uri, id);
+			return Utils.combineUri(uri, id);
 		}
 		return uri;
 	},
@@ -317,22 +395,23 @@ Balanced.Model.reopenClass({
 	 *
 	 * Example:
 	 *
-	 * Balanced.Marketplace = Balanced.UserMarketplace.extend({
-	 *      owner_customer: Balanced.Model.belongsTo('owner_customer_json', 'Balanced.Customer')
+	 * Marketplace = UserMarketplace.extend({
+	 *      owner_customer: Model.belongsTo('owner_customer_json', 'customer')
 	 * });
 	 */
 	belongsTo: function(propertyName, defaultType) {
-		defaultType = defaultType || 'Balanced.Model';
+		defaultType = defaultType || 'model';
 
 		var embeddedProperty = JSON_PROPERTY_KEY + '.' + propertyName;
 		var uriProperty = propertyName + URI_POSTFIX;
 		var fullUriProperty = JSON_PROPERTY_KEY + '.' + propertyName + URI_POSTFIX;
 
 		return Ember.computed(function() {
-			var typeClass = Balanced.TypeMappings.typeClass(defaultType);
+			var typeClass = TypeMappings.typeClass(defaultType);
 
 			var embeddedPropertyValue = this.get(embeddedProperty);
 			var uriPropertyValue = this.get(fullUriProperty);
+
 			if (embeddedPropertyValue) {
 				if (!embeddedPropertyValue._type) {
 					embeddedPropertyValue = typeClass.serializer.extractSingle(embeddedPropertyValue, typeClass) || embeddedPropertyValue;
@@ -351,10 +430,13 @@ Balanced.Model.reopenClass({
 					// property in our JSON. That'll force an update of the
 					// association
 					var self = this;
-					Balanced.Adapter.get(defaultType, uriPropertyValue, function(json) {
-						var modelJson = typeClass.serializer.extractSingle(json, typeClass, uriPropertyValue);
-						self.set(embeddedProperty, modelJson);
-					});
+					this
+						.constructor
+						.getAdapter()
+						.get(defaultType, uriPropertyValue, function(json) {
+							var modelJson = typeClass.serializer.extractSingle(json, typeClass, uriPropertyValue);
+							self.set(embeddedProperty, modelJson);
+						});
 
 					return embeddedPropertyValue;
 				}
@@ -362,6 +444,18 @@ Balanced.Model.reopenClass({
 				return embeddedPropertyValue;
 			}
 		}).property(embeddedProperty, fullUriProperty);
+	},
+
+	belongsToWithUri: function(defaultType, uriPropertyName) {
+		return Ember.computed(function() {
+			var typeClass = this.get("container").lookupFactory("model:" + defaultType);
+			var uriPropertyValue = this.get(uriPropertyName);
+			if (uriPropertyValue) {
+				return typeClass.find(uriPropertyValue);
+			} else {
+				return null;
+			}
+		}).property(uriPropertyName);
 	},
 
 	/*
@@ -378,12 +472,12 @@ Balanced.Model.reopenClass({
 	 *
 	 * Example:
 	 *
-	 * Balanced.Marketplace = Balanced.UserMarketplace.extend({
-	 *      customers: Balanced.Model.hasMany('customers_json', 'Balanced.Customer')
+	 * Marketplace = UserMarketplace.extend({
+	 *      customers: Model.hasMany('customers_json', 'customer')
 	 * });
 	 */
 	hasMany: function(propertyName, defaultType) {
-		defaultType = defaultType || 'Balanced.Model';
+		defaultType = defaultType || 'model';
 
 		var embeddedProperty = JSON_PROPERTY_KEY + '.' + propertyName;
 		var uriProperty = propertyName + URI_POSTFIX;
@@ -391,7 +485,7 @@ Balanced.Model.reopenClass({
 		var uriMetadataProperty = JSON_PROPERTY_KEY + '.' + URI_METADATA_PROPERTY;
 
 		return Ember.computed(function() {
-			var typeClass = Balanced.TypeMappings.typeClass(defaultType);
+			var typeClass = TypeMappings.typeClass(defaultType);
 			var embeddedPropertyValue = this.get(embeddedProperty);
 			// if the URI isn't defined in the JSON, check for a property on
 			// the model. This way we can hardcode URIs if necessary to support
@@ -399,11 +493,11 @@ Balanced.Model.reopenClass({
 			var uriPropertyValue = this.get(fullUriProperty) || this.get(uriProperty);
 
 			if (embeddedPropertyValue) {
-				return Balanced.ModelArray.newArrayCreatedFromJson(embeddedPropertyValue, defaultType);
+				return ModelArray.newArrayCreatedFromJson(embeddedPropertyValue, defaultType);
 			} else if (uriPropertyValue) {
-				return Balanced.ModelArray.newArrayLoadedFromUri(uriPropertyValue, defaultType);
+				return ModelArray.newArrayLoadedFromUri(uriPropertyValue, defaultType);
 			} else {
-				return Balanced.ModelArray.create({
+				return ModelArray.create({
 					content: Ember.A(),
 					typeClass: typeClass
 				});
@@ -412,16 +506,19 @@ Balanced.Model.reopenClass({
 	},
 
 	_materializeLoadedObjectFromAPIResult: function(json) {
+		var UserMarketplace = require("balanced-dashboard/models/user-marketplace")['default'];
+		var UserInvite = require("balanced-dashboard/models/user-invite")['default'];
+
 		var objClass = this;
 
 		if (json._type) {
-			var mappedTypeClass = Balanced.TypeMappings.classForType(json._type);
+			var mappedTypeClass = TypeMappings.classForType(json._type);
 			if (mappedTypeClass) {
 				objClass = mappedTypeClass;
 			}
 		} else {
 			// HACK - once we fix the API response from the auth proxy, we should take out the if
-			if (objClass !== Balanced.UserMarketplace && objClass !== Balanced.UserInvite) {
+			if (objClass !== UserMarketplace && objClass !== UserInvite) {
 				Ember.Logger.warn('No _type field found on URI: ' + json.uri);
 			}
 		}
@@ -446,4 +543,6 @@ Balanced.Model.reopenClass({
 	}
 });
 
-Balanced.Model.Events = Ember.Object.extend(Ember.Evented).create();
+Model.Events = Ember.Object.extend(Ember.Evented).create();
+
+export default Model;

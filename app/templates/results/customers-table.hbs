@@ -1,0 +1,47 @@
+<thead>
+	<tr>
+		<th class="col-md-3 has-filter">
+			{{#if view.isSearch}}
+				{{#view "results/search-results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+					<span>Date</span>
+				{{/view}}
+			{{else}}
+				{{#view "results/results-loader-sort-column-header" resultsLoader=view.loader field="created_at" actionName="changeSortOrder"}}
+					<span>Date</span>
+				{{/view}}
+			{{/if}}
+		</th>
+		<th class="col-md-4"><span>Customer</span></th>
+		<th class="col-md-4"><span>Business</span></th>
+	</tr>
+</thead>
+
+{{#if view.loader.results.hasNextPage}}
+	{{view "results/results-load-more" results=view.loader.results columns=3}}
+{{/if}}
+
+<tbody>
+	{{#each customer in view.loader.results}}
+		<tr>
+			{{view "tables/cells/linked-date-cell" routeName=customer.route_name date=customer.created_at item=customer}}
+			{{view "tables/cells/linked-two-lines-cell"
+				item=customer
+				routeName=customer.route_name
+				primaryLabelText=customer.display_me
+				secondaryLabelText=customer.email
+				title=customer.display_me_with_email
+			}}
+			{{view "tables/cells/titled-linked-cell" routeName=customer.route_name item=customer labelText=customer.business_name}}
+		</tr>
+	{{else}}
+		<tr>
+			<td colspan="3" class="no-results">
+				{{#if view.loader.results.isLoaded}}
+					No customers
+				{{else}}
+					Loading...
+				{{/if}}
+			</td>
+		</tr>
+	{{/each}}
+</tbody>
